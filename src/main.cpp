@@ -11,7 +11,7 @@
 
 using namespace smtech1;
 
-int main(int argc, const char * argv[]) {
+int main(void) {
     // Spawn and start renderer
     SMRenderer renderer(640, 480);;
     renderer.run();
