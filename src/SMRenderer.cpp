@@ -8,12 +8,7 @@ using namespace smtech1;
 
 // Initialize thread controls, width, height
 SMRenderer::SMRenderer(Uint32 width, Uint32 height) : renderThread(), renderRunning(false), width(width), height(height) {
-    player.x = static_cast<double>(width/2);
-    player.y = static_cast<double>(height/2);
-    player.z = 0.0;
-    position.x = static_cast<double>(width/2);
-    position.y = static_cast<double>(height/2);
-    position.z = 0.0;
+
 }
 
 // Destructor shuts down thread before rejoining
@@ -83,32 +78,10 @@ void SMRenderer::threadinit() {
 // Loads meshes into SMMesh objects for rendering
 // Will be replaced with a file format and more concrete Mesh structure
 void SMRenderer::initMeshes() {
-    SMVector a {315.0,35.0};
-    SMVector b {210.0,70.0};
-    SMVector c {105.0,175.0};
-    SMVector d {105.0,290.0};
-    SMVector e {315.0,370.0};
-    SMVector f {420.0,315.0};
-    SMVector g {525.0,185.0};
-    SMVector h {525.0,35.0};
-    
-    SMLine ab {a,b,0x003366}; // darkblue
-    SMLine bc {b,c,0x669999}; // turquoise
-    SMLine cd {c,d,0x339933}; // green
-    SMLine de {d,e,0x333300}; // olive
-    SMLine ef {e,f,0xCCCC00}; // yellow
-    SMLine fg {f,g,0xCC6600}; // orange
-    SMLine gh {g,h,0xCC0000}; // red
-    SMLine ha {h,a,0xCC0099}; // pink
-    
-    lines.push_back(ab);
-    lines.push_back(bc);
-    lines.push_back(cd);
-    lines.push_back(de);
-    lines.push_back(ef);
-    lines.push_back(fg);
-    lines.push_back(gh);
-    lines.push_back(ha);
+    SMVector pt1 { static_cast<int>((width/2)-50), static_cast<int>((height/2)-50), 0 };
+    SMVector pt2 { static_cast<int>((width/2)+50), static_cast<int>((height/2)-50), 0 };
+    SMLine line { pt1, pt2, 0xFFFF99 };
+    lines.push_back(line);
 }
 
 // Main render thread loop function
@@ -159,29 +132,25 @@ void SMRenderer::render() {
             //drawLine(player.x, player.y, player.x+10*cos(angle), player.y+10*sin(angle), 0x00FF00);
             //drawLine(pt1.x, pt1.z, pt2.x, pt2.z, i.color);
             
-            if ((pt1.z > 0) || (pt2.z > 0)) {
-                //pt1.z = pt1.z == 0 ? 0.0001 : pt1.z;
-                //pt2.z = pt2.z == 0 ? 0.0001 : pt2.z;
-                
-                double x1 = (-pt1.x)/pt1.z;
-                double y1a = (-player.y)/pt1.z;
-                double y1b = player.y/pt1.z;
-                double x2 = (-pt2.x)/pt2.z;
-                double y2a = (-player.y)/pt2.z;
-                double y2b = player.y/pt2.z;
-                for (int x=x1; x<x2; x++) {
-                    double ya = y1a + (x-x1) * (y2a-y1a)/(x2-x1);
-                    double yb = y1b + (x-x1) * (y2b-y1b)/(x2-x1);
-                    
-                    drawLine(player.x+x, 0, player.x+x, player.y + (-ya), 0xFFFFFF); // Draw ceiling
-                    drawLine(player.x+x, player.y+yb, player.x+x, height, 0x6699FF); // Draw floor
-                    drawLine(player.x+x, player.y+ya, player.x+x, player.y+yb, i.color); // Draw wall
-                }
-                
-            }
             // 3D Projection
-        
             
+            pt1.z = pt1.z == 0 ? 1 : pt1.z;
+            pt2.z = pt2.z == 0 ? 1 : pt2.z;
+            
+            int x1 = (-pt1.x)*16/pt1.z;
+            int y1a = (-player.y)/pt1.z;
+            int y1b = player.y/pt1.z;
+            int x2 = (-pt2.x)*16/pt2.z;
+            int y2a = (-player.y)/pt2.z;
+            int y2b = player.y/pt2.z;
+            for (int x=x1; x<x2; x++) {
+                int ya = y1a + (x-x1) * (y2a-y1a)/(x2-x1);
+                int yb = y1b + (x-x1) * (y2b-y1b)/(x2-x1);
+                
+                drawLine(player.x+x, 0, player.x+x, player.y + (-ya), 0xFFFFFF);
+                drawLine(player.x+x, player.y+yb, player.x+x, height, 0x6699FF);
+                drawLine(player.x+x, player.y+ya, player.x+x, player.y+yb, i.color);
+            }
             /*
             drawLine(player.x+x1, player.y+y1a, player.x+x2, player.y+y2a, i.color);
             drawLine(player.x+x1, player.y+y1b, player.x+x2, player.y+y2b, i.color);
@@ -364,10 +333,10 @@ inline void SMRenderer::drawPixel(int x, int y, Uint32 pixel) {
 }
 
 // Vector intersection
-SMVector SMRenderer::intersection(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4) {
+SMVector SMRenderer::intersection(int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4) {
     int x = crossProduct(x1, y1, x2, y2);
     int y = crossProduct(x3, y3, x4, y4);
-    //int det = crossProduct(x1-x2, y1-y2, x3-x4, y3-y4);
+    int det = crossProduct(x1-x2, y1-y2, x3-x4, y3-y4);
     x = crossProduct(x, x1-x2, y, x3-x4);
     y = crossProduct(x, y1-y2, y, y3-y4);
     
@@ -379,14 +348,14 @@ SMVector SMRenderer::intersection(double x1, double y1, double x2, double y2, do
 }
 
 // Some useless vector math functions
-double SMRenderer::dotProduct(const SMVector& vecta, const SMVector& vectb) {
+int SMRenderer::dotProduct(const SMVector& vecta, const SMVector& vectb) {
     double dot = vecta.x * vectb.x;
     dot += vecta.y * vectb.y;
     return dot;
 }
 
 // Black magic
-double SMRenderer::crossProduct(double x1, double y1, double x2, double y2) {
+int SMRenderer::crossProduct(int x1, int y1, int x2, int y2) {
     int result = x1*y2 - y1*x2;
     return result;
 }

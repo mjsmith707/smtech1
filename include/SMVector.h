@@ -9,9 +9,9 @@
 // Vector struct
 namespace smtech1 {
     typedef struct SMVector {
-        double x;
-        double y;
-        double z;
+        int x;
+        int y;
+        int z;
     } SMVector;
 }
 

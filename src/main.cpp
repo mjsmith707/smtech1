@@ -4,7 +4,6 @@
 //
 
 #include <iostream>
-#include <string>
 #include <vector>
 #include <SDL2/SDL.h>
 #include "SMRenderer.h"
@@ -21,3 +20,5 @@ int main(void) {
     std::cin >> whatever;
     return 0;
 }
+
+
