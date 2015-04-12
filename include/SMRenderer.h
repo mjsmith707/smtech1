@@ -20,8 +20,12 @@
 namespace smtech1 {
     class SMRenderer {
         private:
-            // Probably useless
+            // Chrono Millisecond typedef
             typedef std::chrono::duration<long, std::milli> msec;
+        
+            //typedef enum ClipCode {
+            //    INSIDE = 0, LEFT = 1, RIGHT = 2, BOTTOM = 4, TOP = 8
+            //} ClipCode;
 
             // Render thread and control
             std::thread renderThread;
@@ -36,15 +40,15 @@ namespace smtech1 {
             const Uint32 height;
         
             // Some useful pi constants;
-            static constexpr double pi = 3.14159265359;
-            static constexpr double pi2 = 6.28318530718;
+            const double pi = 3.14159265359;
+            const double pi2 = 6.28318530718;
         
             // Fixed Player
-            SMVector player { static_cast<int>(width/2), static_cast<int>(height/2), 0 };
+            SMVector player;
         
             // Position
-            SMVector position { static_cast<int>(width/2), static_cast<int>(height/2), 0 };
-            double angle = 0;
+            SMVector position;
+            double angle = 4.78319;
 
             // Bool to indicate whether the window has mouse grab
             bool mousemode = false;
@@ -64,11 +68,14 @@ namespace smtech1 {
 
             // Input handler
             inline void getInput(SDL_Event& event);
+        
+            // Line clipping helper
+            //ClipCode getClipping(double x, double y);
 
             // Vector functions
-            int dotProduct(const SMVector& vecta, const SMVector& vectb);
-        SMVector intersection(int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4);
-            int crossProduct(int x1, int y1, int x2, int y2);
+            double dotProduct(const SMVector& vecta, const SMVector& vectb);
+            SMVector intersection(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4);
+            double crossProduct(double x1, double y1, double x2, double y2);
             SMVector normalize(const SMVector& vecta);
             SMVector project(const SMVector& vecta);
 
