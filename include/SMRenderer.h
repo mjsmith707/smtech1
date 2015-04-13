@@ -16,6 +16,7 @@
 #include <SDL2/SDL.h>
 #include "SMLine.h"
 #include "SMVector.h"
+#include "Minimap.h"
 
 namespace smtech1 {
     class SMRenderer {
@@ -56,6 +57,9 @@ namespace smtech1 {
             // Meshes to render
             std::vector<SMLine> lines;
 
+            // Minimap
+            Minimap minimap;
+
             // Thread functions
             void threadinit();
             void render();
@@ -82,6 +86,7 @@ namespace smtech1 {
         public:
             SMRenderer(Uint32 width, Uint32 height);
             ~SMRenderer();
+
             void run();
     };
 }

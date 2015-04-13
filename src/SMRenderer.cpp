@@ -73,6 +73,13 @@ void SMRenderer::threadinit() {
     // Create some render data
     initMeshes();
 
+    // minimap init
+    SMVector bl{ 10.0, 10.0 };
+    SMVector tr{ 100.0, 100.0 };
+    
+    Minimap mm { bl, tr };
+    minimap = mm;
+
     // Enter render loop
     render();
 
@@ -83,7 +90,6 @@ void SMRenderer::threadinit() {
 // Loads meshes into SMMesh objects for rendering
 // Will be replaced with a file format and more concrete Mesh structure
 void SMRenderer::initMeshes() {
-	
     SMVector a {315.0,35.0};
     SMVector b {210.0,70.0};
     SMVector c {105.0,175.0};
@@ -151,13 +157,27 @@ void SMRenderer::render() {
 
         // Erase framebuffer
         drawBlank();
-        
+            
         drawPixel(player.x, player.y, 0xFFFF66);
+		
         for (auto i : lines) {
 			SMVector pt1 = project(i.pt1);
-			SMVector pt2 = project(i.pt2);
-			drawLine(pt1.x, pt1.y, pt2.x, pt2.y, i.color);
-			
+		    SMVector pt2 = project(i.pt2);
+	        drawLine(pt1.x, pt1.y, pt2.x, pt2.y, i.color);
+
+            // for minimap
+            SMVector mmp1 = minimap.project(i.pt1, angle, position, player);
+            SMVector mmp2 = minimap.project(i.pt2, angle, position, player);
+            drawLine(mmp1.x, mmp1.y, mmp2.x, mmp2.y, i.color);
+            drawPixel(minimap.bl.x + 0.5 * minimap.tr.x, minimap.bl.y + 0.5 * minimap.tr.y, 0xFFFF66);
+
+
+            // minimap box
+            drawLine(minimap.bl.x, minimap.bl.y, minimap.tr.x, minimap.bl.y, 0x00ff00);
+            drawLine(minimap.bl.x, minimap.tr.y, minimap.tr.x, minimap.tr.y, 0x00ff00);
+            drawLine(minimap.bl.x, minimap.bl.y, minimap.bl.x, minimap.tr.y, 0x00ff00);
+            drawLine(minimap.tr.x, minimap.bl.y, minimap.tr.x, minimap.tr.y, 0x00ff00);
+
 			// IDK if we need this still
 			/*
             // 2D Player view
