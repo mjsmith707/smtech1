@@ -83,6 +83,7 @@ void SMRenderer::threadinit() {
 // Loads meshes into SMMesh objects for rendering
 // Will be replaced with a file format and more concrete Mesh structure
 void SMRenderer::initMeshes() {
+	
     SMVector a {315.0,35.0};
     SMVector b {210.0,70.0};
     SMVector c {105.0,175.0};
@@ -109,6 +110,7 @@ void SMRenderer::initMeshes() {
     lines.push_back(fg);
     lines.push_back(gh);
     lines.push_back(ha);
+
 }
 
 // Main render thread loop function
@@ -152,9 +154,12 @@ void SMRenderer::render() {
         
         drawPixel(player.x, player.y, 0xFFFF66);
         for (auto i : lines) {
-            SMVector pt1 = project(i.pt1);
-            SMVector pt2 = project(i.pt2);
-            
+			SMVector pt1 = project(i.pt1);
+			SMVector pt2 = project(i.pt2);
+			drawLine(pt1.x, pt1.y, pt2.x, pt2.y, i.color);
+			
+			// IDK if we need this still
+			/*
             // 2D Player view
             //drawLine(player.x, player.y, player.x+10*cos(angle), player.y+10*sin(angle), 0x00FF00);
             //drawLine(pt1.x, pt1.z, pt2.x, pt2.z, i.color);
@@ -180,14 +185,15 @@ void SMRenderer::render() {
                 
             }
             // 3D Projection
-        
-            
+            */
             /*
             drawLine(player.x+x1, player.y+y1a, player.x+x2, player.y+y2a, i.color);
             drawLine(player.x+x1, player.y+y1b, player.x+x2, player.y+y2b, i.color);
             drawLine(player.x+x1, player.y+y1a, player.x+x1, player.y+y1b, i.color);
             drawLine(player.x+x2, player.y+y2a, player.x+x2, player.y+y2b, i.color);
             */
+			
+			
         }
 
         // Flip buffer
@@ -214,17 +220,39 @@ inline void SMRenderer::getInput(SDL_Event& event) {
                 std::cout << "keydown" << std::endl;
                 switch (event.key.keysym.sym) {
                     case SDLK_w:
-                        position.y += 10;
+                        position.y -= sin(angle);
+						position.x -= cos(angle);
                         break;
                     case SDLK_a:
-                        position.x += 10;
+						position.y += sin(angle + (pi / 2.0));
+						position.x += cos(angle + (pi / 2.0));
                         break;
                     case SDLK_s:
-                        position.y -= 10;
+						position.y += sin(angle);
+						position.x += cos(angle);
                         break;
                     case SDLK_d:
-                        position.x -= 10;
+						position.y += sin(angle - (pi / 2.0));
+						position.x += cos(angle - (pi / 2.0));
                         break;
+					case SDLK_LEFT:
+						if (angle <= 0) {
+							angle = pi2;
+						}
+						else if (angle >= pi2) {
+							angle = 0;
+						}
+						angle -= 0.05;
+						break;
+					case SDLK_RIGHT:
+						if (angle <= 0) {
+							angle = pi2;
+						}
+						else if (angle >= pi2) {
+							angle = 0;
+						}
+						angle += 0.05;
+						break;
                     case SDLK_ESCAPE:
                         if (mousemode) {
                             mousemode = SDL_SetRelativeMouseMode(SDL_FALSE) == 0 ? false : true;
@@ -404,17 +432,17 @@ SMVector SMRenderer::normalize(const SMVector& vecta) {
 // Do some fancy vector math
 SMVector SMRenderer::project(const SMVector& vect) {
     SMVector result;
-    // Camera transform
-    result.x = vect.x-player.x;
-    result.y = vect.y-player.y;
-    
-    // Rotation
-    result.z = result.x*cos(angle) + result.y*sin(angle);
-    result.x = result.x*sin(angle) - result.y*cos(angle);
+	
+    // offset position
+	double x = vect.x - position.x ;
+	double y = vect.y - position.y ;
+	
+	// camera transform
+	result.x = x * sin(angle) - y * cos(angle);
+	result.y = x * cos(angle) + y * sin(angle);
 
-    // Scaling about fixed player
-    result.z = position.y - result.z;
-    result.x = position.x - result.x;
-    
+	result.x += player.x;
+	result.y += player.y;
+
     return result;
 }
