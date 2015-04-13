@@ -58,7 +58,11 @@ namespace smtech1 {
             std::vector<SMLine> lines;
 
             // Minimap
+            SMVector maptr;
+            SMVector mapbl;
             Minimap minimap;
+            bool mapactive;
+            bool mapfullscreen;
 
             // Thread functions
             void threadinit();
@@ -69,6 +73,8 @@ namespace smtech1 {
             inline void drawBlank();
             inline void drawPixel(int x, int y, Uint32 color);
             inline void drawLine(int x1, int y1, int x2, int y2, Uint32 color);
+            inline void drawHud();
+            inline void drawMap();
 
             // Input handler
             inline void getInput(SDL_Event& event);
@@ -77,9 +83,9 @@ namespace smtech1 {
             //ClipCode getClipping(double x, double y);
 
             // Vector functions
-            double dotProduct(const SMVector& vecta, const SMVector& vectb);
+            inline double dotProduct(const SMVector& vecta, const SMVector& vectb);
             SMVector intersection(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4);
-            double crossProduct(double x1, double y1, double x2, double y2);
+            inline double crossProduct(double x1, double y1, double x2, double y2);
             SMVector normalize(const SMVector& vecta);
             SMVector project(const SMVector& vecta);
 

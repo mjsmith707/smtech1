@@ -1,7 +1,9 @@
-#include "Minimap.h"
-#include "SMVector.h"
-#include "SMRenderer.h"
+//
+//  Minimap.h
+//  smtech1
+//
 
+#include "Minimap.h"
 using namespace smtech1;
 
 SMVector Minimap::project(const SMVector& vect, const double angle, const SMVector& position, const SMVector& player){

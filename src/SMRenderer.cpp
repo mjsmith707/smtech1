@@ -74,11 +74,11 @@ void SMRenderer::threadinit() {
     initMeshes();
 
     // minimap init
-    SMVector bl{ 10.0, 10.0 };
-    SMVector tr{ 100.0, 100.0 };
-    
-    Minimap mm { bl, tr };
-    minimap = mm;
+    mapbl = { 10.0, 10.0, 0 };
+    maptr = { 100.0, 100.0, 0 };
+    minimap = { mapbl, maptr, 0xFFFF66, 0x00ff00 };
+    mapactive = true;
+    mapfullscreen = false;
 
     // Enter render loop
     render();
@@ -165,28 +165,10 @@ void SMRenderer::render() {
 		    SMVector pt2 = project(i.pt2);
 	        drawLine(pt1.x, pt1.y, pt2.x, pt2.y, i.color);
 
-            // for minimap
-            SMVector mmp1 = minimap.project(i.pt1, angle, position, player);
-            SMVector mmp2 = minimap.project(i.pt2, angle, position, player);
-            drawLine(mmp1.x, mmp1.y, mmp2.x, mmp2.y, i.color);
-            drawPixel(minimap.bl.x + 0.5 * minimap.tr.x, minimap.bl.y + 0.5 * minimap.tr.y, 0xFFFF66);
-
-
-            // minimap box
-            drawLine(minimap.bl.x, minimap.bl.y, minimap.tr.x, minimap.bl.y, 0x00ff00);
-            drawLine(minimap.bl.x, minimap.tr.y, minimap.tr.x, minimap.tr.y, 0x00ff00);
-            drawLine(minimap.bl.x, minimap.bl.y, minimap.bl.x, minimap.tr.y, 0x00ff00);
-            drawLine(minimap.tr.x, minimap.bl.y, minimap.tr.x, minimap.tr.y, 0x00ff00);
-
-			// IDK if we need this still
-			/*
-            // 2D Player view
-            //drawLine(player.x, player.y, player.x+10*cos(angle), player.y+10*sin(angle), 0x00FF00);
-            //drawLine(pt1.x, pt1.z, pt2.x, pt2.z, i.color);
             
+
+            /*
             if ((pt1.z > 0) || (pt2.z > 0)) {
-                //pt1.z = pt1.z == 0 ? 0.0001 : pt1.z;
-                //pt2.z = pt2.z == 0 ? 0.0001 : pt2.z;
                 
                 double x1 = (-pt1.x)/pt1.z;
                 double y1a = (-player.y)/pt1.z;
@@ -204,17 +186,11 @@ void SMRenderer::render() {
                 }
                 
             }
-            // 3D Projection
             */
-            /*
-            drawLine(player.x+x1, player.y+y1a, player.x+x2, player.y+y2a, i.color);
-            drawLine(player.x+x1, player.y+y1b, player.x+x2, player.y+y2b, i.color);
-            drawLine(player.x+x1, player.y+y1a, player.x+x1, player.y+y1b, i.color);
-            drawLine(player.x+x2, player.y+y2a, player.x+x2, player.y+y2b, i.color);
-            */
-			
-			
         }
+        
+        // Draw HUD Elements
+        drawHud();
 
         // Flip buffer
         SDL_UpdateWindowSurface(window);
@@ -279,6 +255,18 @@ inline void SMRenderer::getInput(SDL_Event& event) {
                         }
                         else {
                             mousemode = SDL_SetRelativeMouseMode(SDL_TRUE) == 0 ? true : false;
+                        }
+                        break;
+                    case SDLK_TAB:
+                        if (!mapactive) {
+                            mapactive = true;
+                        }
+                        else if (mapactive && !mapfullscreen) {
+                            mapfullscreen = true;
+                        }
+                        else if (mapactive && mapfullscreen) {
+                            mapactive = false;
+                            mapfullscreen = false;
                         }
                         break;
                     case SDLK_q:
@@ -411,6 +399,46 @@ inline void SMRenderer::drawPixel(int x, int y, Uint32 pixel) {
     }
 }
 
+// Draw 2D elements on top of rendered scene
+inline void SMRenderer::drawHud() {
+    // Draw Minimap
+    drawMap();
+    
+    // Draw Gun model, etc.
+}
+
+// Will greatly simplify rendering order at the expensive of a second
+// (forthcoming) pruned lines list traversal
+inline void SMRenderer::drawMap() {
+    if (!mapactive) {
+        return;
+    }
+    for (auto i : lines) {
+        // for minimap
+        if (!mapfullscreen) {
+            SMVector mmp1 = minimap.project(i.pt1, angle, position, player);
+            SMVector mmp2 = minimap.project(i.pt2, angle, position, player);
+            drawLine(mmp1.x, mmp1.y, mmp2.x, mmp2.y, i.color);
+            drawPixel(minimap.bl.x + 0.5 * minimap.tr.x, minimap.bl.y + 0.5 * minimap.tr.y, 0xFFFF66);
+        }
+        else {
+            SMVector mmp1 = project(i.pt1);
+            SMVector mmp2 = project(i.pt2);
+            drawLine(mmp1.x, mmp1.y, mmp2.x, mmp2.y, i.color);
+            drawPixel(player.x, player.y, 0xFFFF66);
+        }
+        
+    }
+    
+    // minimap box
+    if (!mapfullscreen) {
+        drawLine(minimap.bl.x, minimap.bl.y, minimap.tr.x, minimap.bl.y, minimap.boxcolor);
+        drawLine(minimap.bl.x, minimap.tr.y, minimap.tr.x, minimap.tr.y, minimap.boxcolor);
+        drawLine(minimap.bl.x, minimap.bl.y, minimap.bl.x, minimap.tr.y, minimap.boxcolor);
+        drawLine(minimap.tr.x, minimap.bl.y, minimap.tr.x, minimap.tr.y, minimap.boxcolor);
+    }
+}
+
 // Vector intersection
 SMVector SMRenderer::intersection(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4) {
     int x = crossProduct(x1, y1, x2, y2);
@@ -427,14 +455,14 @@ SMVector SMRenderer::intersection(double x1, double y1, double x2, double y2, do
 }
 
 // Some useless vector math functions
-double SMRenderer::dotProduct(const SMVector& vecta, const SMVector& vectb) {
+inline double SMRenderer::dotProduct(const SMVector& vecta, const SMVector& vectb) {
     double dot = vecta.x * vectb.x;
     dot += vecta.y * vectb.y;
     return dot;
 }
 
 // Black magic
-double SMRenderer::crossProduct(double x1, double y1, double x2, double y2) {
+inline double SMRenderer::crossProduct(double x1, double y1, double x2, double y2) {
     int result = x1*y2 - y1*x2;
     return result;
 }
