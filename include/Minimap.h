@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <vector>
+#include <cstdint>
 #include "SMVector.h"
 
 namespace smtech1 {

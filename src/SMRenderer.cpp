@@ -7,7 +7,7 @@
 using namespace smtech1;
 
 // Initialize thread controls, width, height
-SMRenderer::SMRenderer(Uint32 width, Uint32 height) : renderThread(), renderRunning(false), width(width), height(height) {
+SMRenderer::SMRenderer(uint32_t width, uint32_t height) : renderThread(), renderRunning(false), width(width), height(height) {
     player.x = static_cast<double>(width/2);
     player.y = static_cast<double>(height/2);
     player.z = 0.0;
@@ -74,8 +74,8 @@ void SMRenderer::threadinit() {
     initMeshes();
 
     // minimap init
-    mapbl = { 10.0, 10.0, 0 };
-    maptr = { 100.0, 100.0, 0 };
+    SMVector mapbl = { 10.0, 10.0, 0 };
+    SMVector maptr = { 100.0, 100.0, 0 };
     minimap = { mapbl, maptr, 0xFFFF66, 0x00ff00 };
     mapactive = true;
     mapfullscreen = false;
@@ -319,7 +319,7 @@ inline void SMRenderer::drawBlank() {
 // Bresenham line algorithm for _all_ octants
 // http://rosettacode.org/wiki/Bitmap/Bresenham%27s_line_algorithm#C.2B.2B
 // Wasn't for lack of trying..
-inline void SMRenderer::drawLine(int x1, int y1, int x2, int y2, Uint32 color) {
+inline void SMRenderer::drawLine(int x1, int y1, int x2, int y2, uint32_t color) {
     // More debug bounds checking
     // Stop that long ass line draw
     if ((abs(x1) > 10000000) || (abs(y1) > 10000000) || (abs(x2) > 10000000) || (abs(y2) > 10000000)) {
@@ -363,7 +363,7 @@ inline void SMRenderer::drawLine(int x1, int y1, int x2, int y2, Uint32 color) {
 }
 
 // Draw pixel to x,y coordinate
-inline void SMRenderer::drawPixel(int x, int y, Uint32 pixel) {
+inline void SMRenderer::drawPixel(int x, int y, uint32_t pixel) {
     // Debugging bounds checking
     if ((x >= width) || (x < 0) || (y >= height) || (y < 0)) {
         return;
@@ -394,7 +394,7 @@ inline void SMRenderer::drawPixel(int x, int y, Uint32 pixel) {
             }
             break;
         case 4:
-            *(Uint32*)p = pixel;
+            *(uint32_t*)p = pixel;
             break;
     }
 }

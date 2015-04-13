@@ -6,6 +6,7 @@
 #ifndef __smtech1__SMRenderer__
 #define __smtech1__SMRenderer__
 
+#include <cstdint>
 #include <iostream>
 #include <thread>
 #include <chrono>
@@ -37,8 +38,8 @@ namespace smtech1 {
             SDL_Surface* screen;
 
             // Screen width/height
-            const Uint32 width;
-            const Uint32 height;
+            const uint32_t width;
+            const uint32_t height;
         
             // Some useful pi constants;
             const double pi = 3.14159265359;
@@ -58,8 +59,6 @@ namespace smtech1 {
             std::vector<SMLine> lines;
 
             // Minimap
-            SMVector maptr;
-            SMVector mapbl;
             Minimap minimap;
             bool mapactive;
             bool mapfullscreen;
@@ -71,8 +70,8 @@ namespace smtech1 {
 
             // Render functions
             inline void drawBlank();
-            inline void drawPixel(int x, int y, Uint32 color);
-            inline void drawLine(int x1, int y1, int x2, int y2, Uint32 color);
+            inline void drawPixel(int x, int y, uint32_t color);
+            inline void drawLine(int x1, int y1, int x2, int y2, uint32_t color);
             inline void drawHud();
             inline void drawMap();
 
@@ -90,7 +89,7 @@ namespace smtech1 {
             SMVector project(const SMVector& vecta);
 
         public:
-            SMRenderer(Uint32 width, Uint32 height);
+            SMRenderer(uint32_t width, uint32_t height);
             ~SMRenderer();
 
             void run();
