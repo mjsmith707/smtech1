@@ -43,6 +43,12 @@ namespace smtech1 {
             Raycaster(uint32_t width, uint32_t height, uint32_t viewHeight, double fov, uint32_t wallsz);
             std::vector<RaycastHit> castLines(SMVector& player, SMVector& position, double angle, std::vector<SMLine>& lines);
             
+            struct debugLines {
+                SMLine projectionPlane;
+                SMLine leftPlane;
+                SMLine rightPlane;
+            } debugLines;
+
             // bad but I want things to work :>
             double planeDist;
     };

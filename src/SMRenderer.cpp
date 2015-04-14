@@ -183,13 +183,13 @@ void SMRenderer::render() {
             double sliceHeight = player.y - (0.5 * player.y) + (32.0 / i.dist) * raycaster.planeDist;
             double roofHeight = player.y - (0.75 * player.y);
             // roof
-            drawLine(x, 0, x, player.y - 0.5 * sliceHeight, 0x8c8c8c);
+            //drawLine(x, 0, x, player.y - 0.5 * sliceHeight, 0x8c8c8c);
 
             // slice
             drawLine(x, player.y - 0.5 * sliceHeight, x, sliceHeight, i.line.color);
 
             // floor
-            drawLine(x, sliceHeight, x, player.y * 2.0, 0x191919);
+            //drawLine(x, sliceHeight, x, player.y * 2.0, 0x191919);
             x++;
         }
         
@@ -371,6 +371,11 @@ inline void SMRenderer::drawLine(int x1, int y1, int x2, int y2, uint32_t color)
     }
 }
 
+// convenience overload
+inline void SMRenderer::drawLine(SMLine line) {
+    drawLine(line.pt1.x, line.pt1.y, line.pt2.x, line.pt2.y, line.color);
+}
+
 // Draw pixel to x,y coordinate
 inline void SMRenderer::drawPixel(int x, int y, uint32_t pixel) {
     // Debugging bounds checking
@@ -451,6 +456,11 @@ inline void SMRenderer::drawMap() {
             drawLine(p1.x, p1.y, p2.x, p2.y, i.line.color);
             drawPixel(i.vec.x, i.vec.y, 0xffffff);
         }
+
+        drawLine(raycaster.debugLines.projectionPlane);
+        drawLine(raycaster.debugLines.leftPlane);
+        drawLine(raycaster.debugLines.rightPlane);
+
     }
 }
 
