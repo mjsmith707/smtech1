@@ -223,6 +223,7 @@ void SMRenderer::render() {
                 }
                 break;
             }
+        }
         
         // Draw HUD Elements
         drawHud();
@@ -307,6 +308,12 @@ inline void SMRenderer::getInput(SDL_Event& event) {
                             mapactive = false;
                             mapfullscreen = false;
                         }
+                        break;
+                    case SDLK_1:
+                        r_mode = TRASHCASTER;
+                        break;
+                    case SDLK_2:
+                        r_mode = DOOMCASTER;
                         break;
                     case SDLK_q:
                         renderRunning = false;

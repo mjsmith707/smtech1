@@ -44,7 +44,7 @@ std::vector<RaycastHit> Raycaster::castLines(SMVector& player, SMVector& positio
             SMLine toIntersect = {  project(i.pt1, angle, position, player) , project(i.pt2, angle, position, player), i.color};
             SMVector intersect;
             
-            SMLine ray = { { player.x, player.y }, { player.x - 0.5 * width + width * a * (fov / (double)width), player.y - planeDist}, 0x0f0f0f + a  * 10 % 255};
+            SMLine ray = { { player.x, player.y }, { player.x - 0.5 * width + width * a * (fov / (double)width), player.y - planeDist}, static_cast<uint32_t>(0x0f0f0f + a  * 10 % 255)};
             if (toIntersect.intersect(ray, intersect)){
                 SMVector vec = intersect;
                 if (vec.y < player.y){

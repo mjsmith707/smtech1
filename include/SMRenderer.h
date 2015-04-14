@@ -19,6 +19,7 @@
 #include "SMVector.h"
 #include "Minimap.h"
 #include "Trashcaster.h"
+#include "Raycaster.h"
 
 namespace smtech1 {
     class SMRenderer {
@@ -98,6 +99,7 @@ namespace smtech1 {
             RendererMode r_mode;
         
             Trashcaster trashcaster;
+            Raycaster raycaster;
 
         public:
             SMRenderer(uint32_t width, uint32_t height);
