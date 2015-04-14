@@ -481,8 +481,8 @@ inline void SMRenderer::drawMap() {
     }
     else {
         for (auto i : minimap.intersections){
-            SMVector p1 = i.line.pt1;
-            SMVector p2 = i.line.pt2;
+            SMVector p1 = i.ray.pt1;
+            SMVector p2 = i.ray.pt2;
 
             drawLine(p1.x, p1.y, p2.x, p2.y, i.line.color);
             drawPixel(i.vec.x, i.vec.y, 0xffffff);

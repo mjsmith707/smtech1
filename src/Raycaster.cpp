@@ -29,10 +29,10 @@ std::vector<RaycastHit> Raycaster::castLines(SMVector& player, SMVector& positio
     //planeDist = (double)(width / 2.0) * tan(fov / 2.0);
     // test with smaller constants :>
     planeDist = 30;
-    std::cout << planeDist << std::endl;
-    debugLines.leftPlane =  { { player.x, player.y }, { player.x + planeDist * -1.0 * sin(fov / 2.0) * 100.0 , player.y - planeDist * 100.0}, 0xFFFF00 };
-    debugLines.rightPlane = { { player.x, player.y }, { player.x + planeDist *  1.0 * sin(fov / 2.0) * 100.0, player.y - planeDist * 100.0}, 0xFF00FF };
-    debugLines.projectionPlane = { { player.x + planeDist * -1.0 * sin(fov / 2.0), player.y - planeDist }, { player.x + planeDist * 1.0 * sin(fov / 2.0) , player.y - planeDist}, 0x00FFFF };
+    //std::cout << planeDist << std::endl;
+    debugLines.leftPlane = { { player.x + planeDist * -1.0 * sin(fov / 2.0), player.y - planeDist }, { player.x + planeDist * -1.0 * sin(fov / 2.0) * 100.0, player.y - planeDist * 100.0 }, 0xFFFF00 };
+    debugLines.rightPlane = { { player.x + planeDist *  1.0 * sin(fov / 2.0), player.y - planeDist }, { player.x + planeDist *  1.0 * sin(fov / 2.0) * 100.0, player.y - planeDist * 100.0 }, 0xFF00FF };
+    debugLines.projectionPlane = { { player.x + planeDist * -1.0 * sin(fov / 2.0), player.y - planeDist }, { player.x + planeDist * 1.0 * sin(fov / 2.0), player.y - planeDist }, 0x00FFFF };
 
     for (int a = 0; a < width; a++){
         for (auto i : lines){
@@ -41,10 +41,10 @@ std::vector<RaycastHit> Raycaster::castLines(SMVector& player, SMVector& positio
             // almost not quite there
             //double beta = ( -1.0 * 1.57079632679 / 2.0 ) + ((double)a) * (fov / (double)width);
 
-            SMLine toIntersect = {  project(i.pt1, angle, position, player) , project(i.pt2, angle, position, player), i.color};
+            SMLine toIntersect = { project(i.pt1, angle, position, player), project(i.pt2, angle, position, player), i.color };
             SMVector intersect;
-            
-            SMLine ray = { { player.x, player.y }, { player.x - 0.5 * width + width * a * (fov / (double)width), player.y - planeDist}, static_cast<uint32_t>(0x0f0f0f + a  * 10 % 255)};
+            SMLine ray = { { player.x + planeDist * (-1.0 + 2.0 * ((double)a / (double)width)) * sin(fov / 2.0), player.y - planeDist }, { player.x + planeDist * (-1.0 + 2.0 * ((double)a / (double)width)) * sin(fov / 2.0) * 100.0, player.y - planeDist * 100.0 }, 0xFFFF00 };
+
             if (toIntersect.intersect(ray, intersect)){
                 SMVector vec = intersect;
                 if (vec.y < player.y){
@@ -53,11 +53,12 @@ std::vector<RaycastHit> Raycaster::castLines(SMVector& player, SMVector& positio
 
                     // removing view distortion
                     //dist *= cos(beta);
-                    projectedLines.push_back(RaycastHit{ vec, line, dist });
+
+                    projectedLines.push_back(RaycastHit{ vec, line, ray, dist });
                 }
             }
         }
-        
+
     }
 
     return projectedLines;

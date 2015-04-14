@@ -20,6 +20,7 @@ namespace smtech1 {
     typedef struct RaycastHit {
         SMVector vec;
         SMLine line;
+        SMLine ray;
         double dist;
     } RaycastHit;
 
