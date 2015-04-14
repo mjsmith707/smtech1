@@ -50,7 +50,7 @@ void SMRenderer::threadinit() {
     else {
         std::cout << "SDL Init Successful" << std::endl;
     }
-
+    
     window = NULL;
     screen = NULL;
 
@@ -154,7 +154,7 @@ void SMRenderer::render() {
                 fps = 0;
             }
         #endif
-
+        
         // Erase framebuffer
         drawBlank();
             
@@ -260,9 +260,13 @@ inline void SMRenderer::getInput(SDL_Event& event) {
                     case SDLK_TAB:
                         if (!mapactive) {
                             mapactive = true;
+                            minimap.bl = SMVector{ 10.0, 10.0 };
+                            minimap.tr = SMVector{ 100.0, 100.0 };
                         }
                         else if (mapactive && !mapfullscreen) {
                             mapfullscreen = true;
+                            minimap.bl = SMVector{ 0.0, 0.0 };
+                            minimap.tr = SMVector{ player.x * 2.0, player.y * 2.0 };
                         }
                         else if (mapactive && mapfullscreen) {
                             mapactive = false;
@@ -415,15 +419,13 @@ inline void SMRenderer::drawMap() {
     }
     for (auto i : lines) {
         // for minimap
+        SMVector mmp1 = minimap.project(i.pt1, angle, position, player);
+        SMVector mmp2 = minimap.project(i.pt2, angle, position, player);
         if (!mapfullscreen) {
-            SMVector mmp1 = minimap.project(i.pt1, angle, position, player);
-            SMVector mmp2 = minimap.project(i.pt2, angle, position, player);
             drawLine(mmp1.x, mmp1.y, mmp2.x, mmp2.y, i.color);
             drawPixel(minimap.bl.x + 0.5 * minimap.tr.x, minimap.bl.y + 0.5 * minimap.tr.y, 0xFFFF66);
         }
         else {
-            SMVector mmp1 = project(i.pt1);
-            SMVector mmp2 = project(i.pt2);
             drawLine(mmp1.x, mmp1.y, mmp2.x, mmp2.y, i.color);
             drawPixel(player.x, player.y, 0xFFFF66);
         }
@@ -491,6 +493,9 @@ SMVector SMRenderer::project(const SMVector& vect) {
 
 	result.x += player.x;
 	result.y += player.y;
+
+    result.x = result.x;
+    result.y = result.x / result.y + player.y;
 
     return result;
 }
