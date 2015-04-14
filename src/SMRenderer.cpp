@@ -81,7 +81,8 @@ void SMRenderer::threadinit() {
     mapfullscreen = false;
 
     // raycaster
-    raycaster = Raycaster(100, 100, 32, 60, 64);
+    raycaster = Raycaster();
+    raycaster.loadMap(lines);
 
     // Enter render loop
     render();
@@ -93,6 +94,8 @@ void SMRenderer::threadinit() {
 // Loads meshes into SMMesh objects for rendering
 // Will be replaced with a file format and more concrete Mesh structure
 void SMRenderer::initMeshes() {
+    
+    /*
     SMVector a {315.0,35.0};
     SMVector b {210.0,70.0};
     SMVector c {105.0,175.0};
@@ -119,7 +122,27 @@ void SMRenderer::initMeshes() {
     lines.push_back(fg);
     lines.push_back(gh);
     lines.push_back(ha);
-
+     */
+    
+    // Test Map 2
+    SMVector a {315.0,230.0};
+    SMVector b {325.0,230.0};
+    SMVector c {330.0,235.0};
+    SMVector d {330.0, 245.0};
+    SMVector e {315.0,250.0};
+    SMVector f {325.0, 250.0};
+    SMVector g {310.0, 235.0};
+    SMVector h {310.0, 245.0};
+    
+    SMLine ab {a,b,0x003366}; // darkblue
+    SMLine cd {c,d,0x669999}; // turquoise
+    SMLine ef {e,f,0x339933}; // green
+    SMLine gh {g,h,0x333300}; // olive
+    
+    lines.push_back(ab);
+    lines.push_back(cd);
+    lines.push_back(ef);
+    lines.push_back(gh);
 }
 
 // Main render thread loop function
@@ -161,17 +184,12 @@ void SMRenderer::render() {
         // Erase framebuffer
         drawBlank();
             
-        drawPixel(player.x, player.y, 0xFFFF66);
-        /*
-        for (auto i : lines) {
-			SMVector pt1 = project(i.pt1);
-		    SMVector pt2 = project(i.pt2);
-	        drawLine(pt1.x, pt1.y, pt2.x, pt2.y, i.color);
-        }
-        */
-
-            
-
+        //drawPixel(player.x, player.y, 0xFFFF66);
+        
+        std::vector<SMLine> projectedLines = raycaster.raycast(position, angle);
+        
+        for (auto i : projectedLines) {
+            drawLine(i.pt1.x, i.pt1.y, i.pt2.x, i.pt2.y, i.color);
         }
         
         // Draw HUD Elements
