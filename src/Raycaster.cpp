@@ -170,7 +170,7 @@ std::vector<SMLine> Raycaster::raycast(SMVector pos, double angle) {
         SMVector pt1;
         SMVector pt2;
         if (side == 1) {
-            //line.color = world[mapx][mapy]/2;
+            line.color = world[mapx][mapy]/2;
         }
         
         pt1.x = x;

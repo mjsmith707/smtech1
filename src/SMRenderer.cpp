@@ -123,6 +123,7 @@ void SMRenderer::initMeshes() {
     lines.push_back(ha);
      */
     
+    
     // Test Map 2
     SMVector a {315.0,230.0};
     SMVector b {325.0,230.0};
@@ -142,6 +143,7 @@ void SMRenderer::initMeshes() {
     lines.push_back(cd);
     lines.push_back(ef);
     lines.push_back(gh);
+     
 }
 
 // Main render thread loop function
