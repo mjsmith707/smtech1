@@ -15,6 +15,7 @@ SMRenderer::SMRenderer(uint32_t width, uint32_t height) : renderThread(), render
     position.y = static_cast<double>(height/2);
     position.z = 0.0;
     r_mode = DOOMCASTER;
+    
 }
 
 // Destructor shuts down thread before rejoining
@@ -83,6 +84,11 @@ void SMRenderer::threadinit() {
 
     // trashcaster
     trashcaster.loadMap(lines);
+    
+    // raycaster
+    //1.047197551196597746154 /* 60deg in rad */
+    //1.57079632679489661923132 /* 90deg in rad */
+    raycaster = Raycaster(width, height, 32, 1.047197551196597746154 /* 60deg in rad */, 64);
 
     // Enter render loop
     render();
@@ -185,8 +191,7 @@ void SMRenderer::render() {
         
         // Erase framebuffer
         drawBlank();
-            
-        //drawPixel(player.x, player.y, 0xFFFF66);
+        
         switch (r_mode) {
             case TRASHCASTER: {
                 std::vector<SMLine> projectedLines = trashcaster.raycast(position, angle);
@@ -197,10 +202,27 @@ void SMRenderer::render() {
                 break;
             }
             case DOOMCASTER: {
-                
+                std::vector<RaycastHit> intersections = raycaster.castLines(player, position, angle, lines);
+                minimap.intersections = intersections;
+                int x = 0;
+                for (auto i : intersections){
+                    // pretty ghetto (and inefficient ! ! !), but it's something to show
+                    
+                    if (i.dist < 1.0) i.dist = 1.0;
+                    double sliceHeight = player.y - (0.5 * player.y) + (32.0 / i.dist) * raycaster.planeDist;
+                    double roofHeight = player.y - (0.75 * player.y);
+                    // roof
+                    //drawLine(x, 0, x, player.y - 0.5 * sliceHeight, 0x8c8c8c);
+                    
+                    // slice
+                    drawLine(x, player.y - 0.5 * sliceHeight, x, sliceHeight, i.line.color);
+                    
+                    // floor
+                    //drawLine(x, sliceHeight, x, player.y * 2.0, 0x191919);
+                    x++;
+                }
+                break;
             }
-        }
-        
         
         // Draw HUD Elements
         drawHud();
@@ -211,6 +233,7 @@ void SMRenderer::render() {
         // Check for input
         // Will be spun off into a different class/thread someday
         getInput(event);
+        
         #if defined( __MACH__)
             // This probably isn't correct.
             while (frametime < framerate{1}) {
@@ -372,6 +395,11 @@ inline void SMRenderer::drawLine(int x1, int y1, int x2, int y2, uint32_t color)
     }
 }
 
+// convenience overload
+inline void SMRenderer::drawLine(SMLine line) {
+    drawLine(line.pt1.x, line.pt1.y, line.pt2.x, line.pt2.y, line.color);
+}
+
 // Draw pixel to x,y coordinate
 inline void SMRenderer::drawPixel(int x, int y, uint32_t pixel) {
     // Debugging bounds checking
@@ -435,7 +463,6 @@ inline void SMRenderer::drawMap() {
             drawLine(mmp1.x, mmp1.y, mmp2.x, mmp2.y, i.color);
             drawPixel(player.x, player.y, 0xFFFF66);
         }
-        
     }
     
     // minimap box
@@ -444,6 +471,20 @@ inline void SMRenderer::drawMap() {
         drawLine(minimap.bl.x, minimap.tr.y, minimap.tr.x, minimap.tr.y, minimap.boxcolor);
         drawLine(minimap.bl.x, minimap.bl.y, minimap.bl.x, minimap.tr.y, minimap.boxcolor);
         drawLine(minimap.tr.x, minimap.bl.y, minimap.tr.x, minimap.tr.y, minimap.boxcolor);
+    }
+    else {
+        for (auto i : minimap.intersections){
+            SMVector p1 = i.line.pt1;
+            SMVector p2 = i.line.pt2;
+
+            drawLine(p1.x, p1.y, p2.x, p2.y, i.line.color);
+            drawPixel(i.vec.x, i.vec.y, 0xffffff);
+        }
+
+        drawLine(raycaster.debugLines.projectionPlane);
+        drawLine(raycaster.debugLines.leftPlane);
+        drawLine(raycaster.debugLines.rightPlane);
+
     }
 }
 

@@ -73,6 +73,7 @@ namespace smtech1 {
             inline void drawBlank();
             inline void drawPixel(int x, int y, uint32_t color);
             inline void drawLine(int x1, int y1, int x2, int y2, uint32_t color);
+            inline void drawLine(SMLine line);
             inline void drawHud();
             inline void drawMap();
 
