@@ -12,7 +12,7 @@ using namespace smtech1;
 // tan(30) or tan(fov/2)? Need to brush up on my trig
 // 64 is wall size, 32 is player viewheight
 
-Raycaster::Raycaster() {
+Raycaster::Raycaster(uint32_t width, uint32_t height) : width(width), height(height) {
     
 }
 
@@ -89,7 +89,7 @@ std::vector<SMLine> Raycaster::raycast(SMVector pos, double angle) {
     direction.y = -sin(angle);
     
     plane.x = 0.0;  //
-    plane.y = 0.66; // 2*atan(0.66/1.0) = 66 deg;
+    plane.y = 1.1519173063; // 2*atan(0.66/1.0) = 66 deg;
     
     for (int x=0; x<width; x++) {
         double camerax = 2*x/double(width) -1;
@@ -170,7 +170,7 @@ std::vector<SMLine> Raycaster::raycast(SMVector pos, double angle) {
         SMVector pt1;
         SMVector pt2;
         if (side == 1) {
-            line.color = world[mapx][mapy]/2;
+            //line.color = world[mapx][mapy]/2;
         }
         
         pt1.x = x;

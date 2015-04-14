@@ -21,12 +21,12 @@ namespace smtech1 {
         SMVector direction;
         SMVector plane;
         
-        uint32_t width = 320;
-        uint32_t height = 240;
+        uint32_t width;
+        uint32_t height;
         int world[640][480];
         void drawLineToWorld(int x1, int y1, int x2, int y2, uint32_t color);
         public:
-            Raycaster();
+            Raycaster(uint32_t width, uint32_t height);
             void loadMap(std::vector<SMLine>& lines);
             std::vector<SMLine> raycast(SMVector pos, double angle);
     };

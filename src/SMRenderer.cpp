@@ -7,7 +7,7 @@
 using namespace smtech1;
 
 // Initialize thread controls, width, height
-SMRenderer::SMRenderer(uint32_t width, uint32_t height) : renderThread(), renderRunning(false), width(width), height(height) {
+SMRenderer::SMRenderer(uint32_t width, uint32_t height) : renderThread(), renderRunning(false), width(width), height(height), raycaster(width, height) {
     player.x = static_cast<double>(width/2);
     player.y = static_cast<double>(height/2);
     player.z = 0.0;
@@ -81,7 +81,6 @@ void SMRenderer::threadinit() {
     mapfullscreen = false;
 
     // raycaster
-    raycaster = Raycaster();
     raycaster.loadMap(lines);
 
     // Enter render loop
@@ -295,7 +294,7 @@ inline void SMRenderer::getInput(SDL_Event& event) {
                     else if (angle >= pi2) {
                         angle = 0;
                     }
-                    angle -= 0.1;
+                    angle -= 0.01;
                 }
                 else if (event.motion.xrel > 0) {
                     if (angle <= 0) {
@@ -304,7 +303,7 @@ inline void SMRenderer::getInput(SDL_Event& event) {
                     else if (angle >= pi2) {
                         angle = 0;
                     }
-                    angle += 0.1;
+                    angle += 0.01;
                 }
             }
             std::cout << "position: <" << player.x << ", " << player.y << ">" << std::endl
@@ -326,12 +325,6 @@ inline void SMRenderer::drawBlank() {
 // http://rosettacode.org/wiki/Bitmap/Bresenham%27s_line_algorithm#C.2B.2B
 // Wasn't for lack of trying..
 inline void SMRenderer::drawLine(int x1, int y1, int x2, int y2, uint32_t color) {
-    // More debug bounds checking
-    // Stop that long ass line draw
-    if ((abs(x1) > 10000000) || (abs(y1) > 10000000) || (abs(x2) > 10000000) || (abs(y2) > 10000000)) {
-        return;
-    }
-
     const bool steep = (abs(y2 - y1) > abs(x2 - x1));
     if (steep) {
         std::swap(x1, y1);
