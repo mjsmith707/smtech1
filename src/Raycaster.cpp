@@ -24,24 +24,36 @@ Raycaster::Raycaster(uint32_t width, uint32_t height, uint32_t viewHeight, doubl
 
 std::vector<RaycastHit> Raycaster::castLines(SMVector& player, SMVector& position, double angle, std::vector<SMLine>& lines) {
     std::vector<RaycastHit> projectedLines;
+
+    // init this somewhere else
+    planeDist = (double)(width / 2.0) * tan(fov);
     
     for (int a = 0; a < width; a++){
         for (auto i : lines){
-            SMLine toIntersect = {  project(i.pt1, angle, position, player) , project(i.pt2, angle, position, player)};
+
+            // for removing view distortion
+            // almost not quite there
+            //double beta = ( -1.0 * 1.57079632679 / 2.0 ) + ((double)a) * (fov / (double)width);
+
+            SMLine toIntersect = {  project(i.pt1, angle, position, player) , project(i.pt2, angle, position, player), i.color};
             SMVector intersect;
-            double dist = (double)(width / 2.0) * tan(fov);
             
-            SMLine ray = { { player.x, player.y }, { player.x - 0.5 * width + width * a * (fov / (double)width), player.y - dist}, 0x00FF00 + a  * 10 % 255};
+            SMLine ray = { { player.x, player.y }, { player.x - 0.5 * width + width * a * (fov / (double)width), player.y - planeDist}, 0x0f0f0f + a  * 10 % 255};
             if (toIntersect.intersect(ray, intersect)){
                 SMVector vec = intersect;
                 if (vec.y < player.y){
-                    SMLine line = ray;
-                    projectedLines.push_back(RaycastHit{ vec, line });
+                    SMLine line = toIntersect;
+                    double dist = std::sqrt(std::pow((position.y - intersect.y), 2.0) + std::pow((position.x - intersect.x), 2.0));
+
+                    // removing view distortion
+                    //dist *= cos(beta);
+                    projectedLines.push_back(RaycastHit{ vec, line, dist});
                 }
             }
         }
+        
     }
-    
+
     return projectedLines;
 }
 

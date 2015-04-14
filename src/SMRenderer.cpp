@@ -17,7 +17,7 @@ SMRenderer::SMRenderer(uint32_t width, uint32_t height) : renderThread(), render
     // raycaster
     //1.047197551196597746154 /* 60deg in rad */
     //1.57079632679489661923132 /* 90deg in rad */
-    raycaster = Raycaster(100, 100, 32, 1.047197551196597746154 /* 60deg in rad */, 64);
+    raycaster = Raycaster(width, height, 32, 1.047197551196597746154 /* 60deg in rad */, 64);
 }
 
 // Destructor shuts down thread before rejoining
@@ -175,9 +175,24 @@ void SMRenderer::render() {
 
         std::vector<RaycastHit> intersections = raycaster.castLines(player, position, angle, lines);
         minimap.intersections = intersections;
+        int x = 0;
         for (auto i : intersections){
+            // pretty ghetto (and inefficient ! ! !), but it's something to show
+            
+            if (i.dist < 1.0) i.dist = 1.0;
+            double sliceHeight = player.y - (0.5 * player.y) + (32.0 / i.dist) * raycaster.planeDist;
+            double roofHeight = player.y - (0.75 * player.y);
+            // roof
+            drawLine(x, 0, x, player.y - 0.5 * sliceHeight, 0x8c8c8c);
 
+            // slice
+            drawLine(x, player.y - 0.5 * sliceHeight, x, sliceHeight, i.line.color);
+
+            // floor
+            drawLine(x, sliceHeight, x, player.y * 2.0, 0x191919);
+            x++;
         }
+        
         
         // Draw HUD Elements
         drawHud();
