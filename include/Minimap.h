@@ -5,6 +5,7 @@
 #include <vector>
 #include <cstdint>
 #include "SMVector.h"
+#include "Raycaster.h"
 
 namespace smtech1 {
     typedef struct Minimap{
@@ -22,6 +23,8 @@ namespace smtech1 {
         uint32_t boxcolor;
       
         SMVector project(const SMVector& vecta, const double angle, const SMVector& position, const SMVector& player);
+
+        std::vector<RaycastHit> intersections;
     } Minimap;
 }
 #endif

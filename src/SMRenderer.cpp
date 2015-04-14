@@ -14,6 +14,10 @@ SMRenderer::SMRenderer(uint32_t width, uint32_t height) : renderThread(), render
     position.x = static_cast<double>(width/2);
     position.y = static_cast<double>(height/2);
     position.z = 0.0;
+    // raycaster
+    //1.047197551196597746154 /* 60deg in rad */
+    //1.57079632679489661923132 /* 90deg in rad */
+    raycaster = Raycaster(100, 100, 32, 1.047197551196597746154 /* 60deg in rad */, 64);
 }
 
 // Destructor shuts down thread before rejoining
@@ -80,8 +84,7 @@ void SMRenderer::threadinit() {
     mapactive = true;
     mapfullscreen = false;
 
-    // raycaster
-    raycaster = Raycaster(100, 100, 32, 60, 64);
+    
 
     // Enter render loop
     render();
@@ -170,7 +173,9 @@ void SMRenderer::render() {
         }
         */
 
-            
+        std::vector<RaycastHit> intersections = raycaster.castLines(player, position, angle, lines);
+        minimap.intersections = intersections;
+        for (auto i : intersections){
 
         }
         
@@ -183,6 +188,7 @@ void SMRenderer::render() {
         // Check for input
         // Will be spun off into a different class/thread someday
         getInput(event);
+        
         #if defined( __MACH__)
             // This probably isn't correct.
             while (frametime < framerate{1}) {
@@ -413,7 +419,6 @@ inline void SMRenderer::drawMap() {
             drawLine(mmp1.x, mmp1.y, mmp2.x, mmp2.y, i.color);
             drawPixel(player.x, player.y, 0xFFFF66);
         }
-        
     }
     
     // minimap box
@@ -422,6 +427,15 @@ inline void SMRenderer::drawMap() {
         drawLine(minimap.bl.x, minimap.tr.y, minimap.tr.x, minimap.tr.y, minimap.boxcolor);
         drawLine(minimap.bl.x, minimap.bl.y, minimap.bl.x, minimap.tr.y, minimap.boxcolor);
         drawLine(minimap.tr.x, minimap.bl.y, minimap.tr.x, minimap.tr.y, minimap.boxcolor);
+    }
+    else {
+        for (auto i : minimap.intersections){
+            SMVector p1 = i.line.pt1;
+            SMVector p2 = i.line.pt2;
+
+            drawLine(p1.x, p1.y, p2.x, p2.y, i.line.color);
+            drawPixel(i.vec.x, i.vec.y, 0xffffff);
+        }
     }
 }
 
