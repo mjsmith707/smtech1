@@ -22,6 +22,7 @@ namespace smtech1 {
         SMLine line;
         SMLine ray;
         double dist;
+        int x;
     } RaycastHit;
 
     class Raycaster {

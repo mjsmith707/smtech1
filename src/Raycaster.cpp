@@ -54,7 +54,7 @@ std::vector<RaycastHit> Raycaster::castLines(SMVector& player, SMVector& positio
                     // removing view distortion
                     //dist *= cos(beta);
 
-                    projectedLines.push_back(RaycastHit{ vec, line, ray, dist });
+                    projectedLines.push_back(RaycastHit{ vec, line, ray, dist, a });
                 }
             }
         }

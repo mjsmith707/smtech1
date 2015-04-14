@@ -101,7 +101,7 @@ void SMRenderer::threadinit() {
 // Will be replaced with a file format and more concrete Mesh structure
 void SMRenderer::initMeshes() {
     
-    /*
+    
     SMVector a {315.0,35.0};
     SMVector b {210.0,70.0};
     SMVector c {105.0,175.0};
@@ -128,9 +128,9 @@ void SMRenderer::initMeshes() {
     lines.push_back(fg);
     lines.push_back(gh);
     lines.push_back(ha);
-     */
+     
     
-    
+    /*
     // Test Map 2
     SMVector a {315.0,230.0};
     SMVector b {325.0,230.0};
@@ -150,6 +150,7 @@ void SMRenderer::initMeshes() {
     lines.push_back(cd);
     lines.push_back(ef);
     lines.push_back(gh);
+    */
      
 }
 
@@ -204,7 +205,7 @@ void SMRenderer::render() {
             case DOOMCASTER: {
                 std::vector<RaycastHit> intersections = raycaster.castLines(player, position, angle, lines);
                 minimap.intersections = intersections;
-                int x = 0;
+                
                 for (auto i : intersections){
                     // pretty ghetto (and inefficient ! ! !), but it's something to show
                     
@@ -215,11 +216,11 @@ void SMRenderer::render() {
                     //drawLine(x, 0, x, player.y - 0.5 * sliceHeight, 0x8c8c8c);
                     
                     // slice
-                    drawLine(x, player.y - 0.5 * sliceHeight, x, sliceHeight, i.line.color);
+                    drawLine(i.x, player.y - 0.5 * sliceHeight, i.x, sliceHeight, i.line.color);
                     
                     // floor
                     //drawLine(x, sliceHeight, x, player.y * 2.0, 0x191919);
-                    x++;
+                    
                 }
                 break;
             }
