@@ -21,7 +21,6 @@ std::vector<SMLine> Raycaster::castLines(SMVector& position, double angle, std::
     
     for (uint32_t ray=0; ray<width; ray+=columnSize) {
         for (uint32_t grid=0; grid<width; grid+=gridSize) {
-            int Ya = gridHeight; // ???     y coordinate of ray intersection point ???????
             int Xa = wallSize/tan(angle);// x coordinate of ray intersection point ?? :->
             
             

@@ -80,6 +80,9 @@ void SMRenderer::threadinit() {
     mapactive = true;
     mapfullscreen = false;
 
+    // raycaster
+    raycaster = Raycaster(100, 100, 32, 60, 64);
+
     // Enter render loop
     render();
 
@@ -159,34 +162,16 @@ void SMRenderer::render() {
         drawBlank();
             
         drawPixel(player.x, player.y, 0xFFFF66);
-		
+        /*
         for (auto i : lines) {
 			SMVector pt1 = project(i.pt1);
 		    SMVector pt2 = project(i.pt2);
 	        drawLine(pt1.x, pt1.y, pt2.x, pt2.y, i.color);
+        }
+        */
 
             
 
-            /*
-            if ((pt1.z > 0) || (pt2.z > 0)) {
-                
-                double x1 = (-pt1.x)/pt1.z;
-                double y1a = (-player.y)/pt1.z;
-                double y1b = player.y/pt1.z;
-                double x2 = (-pt2.x)/pt2.z;
-                double y2a = (-player.y)/pt2.z;
-                double y2b = player.y/pt2.z;
-                for (int x=x1; x<x2; x++) {
-                    double ya = y1a + (x-x1) * (y2a-y1a)/(x2-x1);
-                    double yb = y1b + (x-x1) * (y2b-y1b)/(x2-x1);
-                    
-                    drawLine(player.x+x, 0, player.x+x, player.y + (-ya), 0xFFFFFF); // Draw ceiling
-                    drawLine(player.x+x, player.y+yb, player.x+x, height, 0x6699FF); // Draw floor
-                    drawLine(player.x+x, player.y+ya, player.x+x, player.y+yb, i.color); // Draw wall
-                }
-                
-            }
-            */
         }
         
         // Draw HUD Elements
@@ -198,7 +183,6 @@ void SMRenderer::render() {
         // Check for input
         // Will be spun off into a different class/thread someday
         getInput(event);
-
         #if defined( __MACH__)
             // This probably isn't correct.
             while (frametime < framerate{1}) {

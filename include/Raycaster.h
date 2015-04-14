@@ -29,7 +29,7 @@ namespace smtech1 {
         
         public:
             Raycaster(uint32_t width, uint32_t height, uint32_t viewHeight, uint32_t fov, uint32_t wallsz);
-            std::vector<SMLine> castLines(SMVector& position, double angle, std::vector<SMLine>& lines);
+            std::vector<SMVector> castLines(SMVector& position, double angle, std::vector<SMLine>& lines);
     };
 }
 

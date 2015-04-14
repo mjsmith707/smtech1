@@ -18,6 +18,7 @@
 #include "SMLine.h"
 #include "SMVector.h"
 #include "Minimap.h"
+#include "Raycaster.h"
 
 namespace smtech1 {
     class SMRenderer {
@@ -87,6 +88,8 @@ namespace smtech1 {
             inline double crossProduct(double x1, double y1, double x2, double y2);
             SMVector normalize(const SMVector& vecta);
             SMVector project(const SMVector& vecta);
+
+            Raycaster raycaster;
 
         public:
             SMRenderer(uint32_t width, uint32_t height);
