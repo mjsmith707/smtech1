@@ -17,22 +17,18 @@ Raycaster::Raycaster(){
 
 }
 
-Raycaster::Raycaster(uint32_t width, uint32_t height, uint32_t viewHeight, double fov, uint32_t wallsz) : width(width), height(height), viewHeight(viewHeight), fov(fov), planeDistance((width/2)/tan(fov/2)), columnSize(fov/width), gridSize(width/wallsz), gridHeight(height/wallsz), wallSize(wallsz) {
-    
-
+Raycaster::Raycaster(uint32_t width, uint32_t height, uint32_t viewHeight, double fov, uint32_t wallsz, SMVector player) : width(width), height(height), viewHeight(viewHeight), fov(fov), planeDistance((width/2)/tan(fov/2)), columnSize(fov/width), gridSize(width/wallsz), gridHeight(height/wallsz), wallSize(wallsz) {
+    planeDist = 30;
+    debugLines.leftPlane = { { player.x + planeDist * -1.0 * sin(fov / 2.0), player.y - planeDist }, { player.x + planeDist * -1.0 * sin(fov / 2.0) * 100.0, player.y - planeDist * 100.0 }, 0xFFFF00 };
+    debugLines.rightPlane = { { player.x + planeDist *  1.0 * sin(fov / 2.0), player.y - planeDist }, { player.x + planeDist *  1.0 * sin(fov / 2.0) * 100.0, player.y - planeDist * 100.0 }, 0xFF00FF };
+    debugLines.projectionPlane = { { player.x + planeDist * -1.0 * sin(fov / 2.0), player.y - planeDist }, { player.x + planeDist * 1.0 * sin(fov / 2.0), player.y - planeDist }, 0x00FFFF };
 }
 
 std::vector<RaycastHit> Raycaster::castLines(SMVector& player, SMVector& position, double angle, std::vector<SMLine>& lines) {
     std::vector<RaycastHit> projectedLines;
 
-    // init this somewhere else
-    //planeDist = (double)(width / 2.0) * tan(fov / 2.0);
-    // test with smaller constants :>
-    planeDist = 30;
-    //std::cout << planeDist << std::endl;
-    debugLines.leftPlane = { { player.x + planeDist * -1.0 * sin(fov / 2.0), player.y - planeDist }, { player.x + planeDist * -1.0 * sin(fov / 2.0) * 100.0, player.y - planeDist * 100.0 }, 0xFFFF00 };
-    debugLines.rightPlane = { { player.x + planeDist *  1.0 * sin(fov / 2.0), player.y - planeDist }, { player.x + planeDist *  1.0 * sin(fov / 2.0) * 100.0, player.y - planeDist * 100.0 }, 0xFF00FF };
-    debugLines.projectionPlane = { { player.x + planeDist * -1.0 * sin(fov / 2.0), player.y - planeDist }, { player.x + planeDist * 1.0 * sin(fov / 2.0), player.y - planeDist }, 0x00FFFF };
+   
+
 
     for (int a = 0; a < width; a++){
         for (auto i : lines){
@@ -41,27 +37,17 @@ std::vector<RaycastHit> Raycaster::castLines(SMVector& player, SMVector& positio
             SMLine ray = { { player.x, player.y}, { player.x + planeDist * (-1.0 + 2.0 * ((double)a / (double)width)) * sin(fov / 2.0) * 100.0, player.y - planeDist * 100.0 }, 0xFFFF00 };
 
             if (toIntersect.intersect(ray, intersect)){
-                // for removing view distortion
-                // almost not quite there
-                double beta = (-1.0 + 2.0 * ((double)a / (double)width)) * sin(fov / 2.0);
-                //if (a%10 == 0)
-                //std::cout << cos(beta) << " " ;
 
                 SMVector vec = intersect;
 
                 if (vec.y < player.y - planeDist){
                     SMLine line = toIntersect;
                     double dist = std::sqrt(std::pow((player.y - intersect.y), 2.0) + std::pow((player.x - intersect.x), 2.0));
-
-                    // removing view distortion
-                    //dist *= cos(beta);
-
                     projectedLines.push_back(RaycastHit{ vec, line, ray, dist, a });
                 }
             }
         }
     }
-    //std::cout << std::endl << std::endl << std::endl << std::endl;
 
     return projectedLines;
 }

@@ -42,7 +42,7 @@ namespace smtech1 {
                 
         public:
             Raycaster();
-            Raycaster(uint32_t width, uint32_t height, uint32_t viewHeight, double fov, uint32_t wallsz);
+            Raycaster(uint32_t width, uint32_t height, uint32_t viewHeight, double fov, uint32_t wallsz, SMVector player);
             std::vector<RaycastHit> castLines(SMVector& player, SMVector& position, double angle, std::vector<SMLine>& lines);
             
             struct debugLines {

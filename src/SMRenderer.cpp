@@ -88,7 +88,7 @@ void SMRenderer::threadinit() {
     // raycaster
     //1.047197551196597746154 /* 60deg in rad */
     //1.57079632679489661923132 /* 90deg in rad */
-    raycaster = Raycaster(width, height, 32, 1.047197551196597746154 /* 60deg in rad */, 64);
+    raycaster = Raycaster(width, height, 32, 1.047197551196597746154 /* 60deg in rad */, 64, player);
 
     // Enter render loop
     render();
@@ -238,23 +238,32 @@ void SMRenderer::render() {
                     double drawEnd = lineh / 2.0 + (double)height / 2.0;
 
                     if (drawStart < 0) drawStart = 0;
-                    if (drawEnd >= height) drawEnd = height - 1;
+                    if (drawEnd >= height) drawEnd = height;
 
-                    vLine(i.x, drawStart, drawEnd, i.line.color);
-                    // pretty ghetto (and inefficient ! ! !), but it's something to show
+
+                    // TODO fix
+                    // smoothstep-ish implementation
+                    double ssin = i.dist;
+
+                    // edge1 and edge2, for clamping
+                    double e1 = 0;
+                    double e2 = 100;
+                    ssin = (ssin - e1) / (e2 - e1);
+                    if (ssin < 0) ssin = 0;
+                    if (ssin > e2) ssin = e2;
+
+                    double intensity = 3.0 * std::pow(ssin, 2.0) - 2.0 * std::pow(ssin, 3.0);
+
+                    // wallseg
+                    // trippy effect
+                    //vLine(i.x, drawStart, drawEnd, i.line.color * (i.dist / 500)); 
+                    vLine(i.x, drawStart, drawEnd, i.line.color * ((uint32_t)intensity)); 
                     
-                    //if (i.dist < 1.0) i.dist = 1.0;
-                    //double sliceHeight = player.y - (0.5 * player.y) + (32.0 / i.dist) * raycaster.planeDist;
-                    //double roofHeight = player.y - (0.75 * player.y);
                     // roof
-                    //drawLine(x, 0, x, player.y - 0.5 * sliceHeight, 0x8c8c8c);
-                    
-                    // slice
-                    //drawLine(i.x, player.y - 0.5 * sliceHeight, i.x, sliceHeight, i.line.color);
-                    
-                    
-                    // floor
-                    //drawLine(x, sliceHeight, x, player.y * 2.0, 0x191919);
+                    vLine(i.x, 0, drawStart, 0x111111);
+
+                    //floor
+                    vLine(i.x, drawEnd, height, 0xAAAAAA );
                     
                 }
                 break;
@@ -522,12 +531,15 @@ inline void SMRenderer::drawMap() {
         drawLine(minimap.tr.x, minimap.bl.y, minimap.tr.x, minimap.tr.y, minimap.boxcolor);
     }
     else {
+        
         for (auto i : minimap.intersections){
-            SMVector p1 = i.ray.pt1;
-            SMVector p2 = i.ray.pt2;
+            if (i.x % 30 == 0){
+                SMVector p1 = i.ray.pt1;
+                SMVector p2 = i.ray.pt2;
 
-            drawLine(p1.x, p1.y, p2.x, p2.y, i.line.color);
-            drawPixel(i.vec.x, i.vec.y, 0xffffff);
+                drawLine(p1.x, p1.y, p2.x, p2.y, i.line.color);
+                drawPixel(i.vec.x, i.vec.y, 0xffffff);
+            }
         }
 
         drawLine(raycaster.debugLines.projectionPlane);
