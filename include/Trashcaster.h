@@ -23,10 +23,11 @@ namespace smtech1 {
         
         uint32_t width;
         uint32_t height;
-        int world[640][480];
+        int* world;
         void drawLineToWorld(int x1, int y1, int x2, int y2, uint32_t color);
         public:
             Trashcaster(uint32_t width, uint32_t height);
+            ~Trashcaster();
             void loadMap(std::vector<SMLine>& lines);
             std::vector<SMLine> raycast(SMVector pos, double angle);
     };

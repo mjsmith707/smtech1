@@ -10,25 +10,29 @@ using namespace smtech1;
 // 64 is wall size, 32 is player viewheight
 
 Trashcaster::Trashcaster(uint32_t width, uint32_t height) : width(width), height(height) {
-    
+    world = new int[width*height];
+}
+
+Trashcaster::~Trashcaster() {
+    delete[] world;
 }
 
 // Load lines into a flat 2d array where -1 is a boundary otherwise a color
 void Trashcaster::loadMap(std::vector<SMLine>& lines) {
     for (int y=0; y<height; y++) {
         for (int x=0; x<width; x++) {
-            world[x][y] = 0;
+            world[x*height + y] = 0;
         }
     }
     
     for (int x=0; x<width; x++) {
-        world[x][0] = 1;
-        world[x][height-1] = 1;
+        world[x*height + 0] = 1;
+        world[x*height + height-1] = 1;
     }
     
     for (int y=0; y<height; y++) {
-        world[0][y] = 1;
-        world[width-1][y] = 1;
+        world[0 + y] = 1;
+        world[(width-1)*height +y] = 1;
     }
     
     for (auto i : lines) {
@@ -65,10 +69,10 @@ void Trashcaster::drawLineToWorld(int x1, int y1, int x2, int y2, uint32_t color
     
     for (int x=(int)x1; x<maxX; x++) {
         if(steep) {
-            world[(int)y][(int)x] = color;
+            world[(int)y*height + (int)x] = color;
         }
         else {
-            world[(int)x][(int)y] = color;
+            world[(int)x*height + (int)y] = color;
         }
         
         error -= dy;
@@ -140,7 +144,7 @@ std::vector<SMLine> Trashcaster::raycast(SMVector pos, double angle) {
                 side = 1;
             }
             
-            if (world[mapx][mapy] > 0) {
+            if (world[mapx*height + mapy] > 0) {
                 hit = 1;
             }
         }
@@ -167,7 +171,7 @@ std::vector<SMLine> Trashcaster::raycast(SMVector pos, double angle) {
         SMVector pt1;
         SMVector pt2;
         if (side == 1) {
-            line.color = world[mapx][mapy]/2;
+            line.color = world[mapx*height + mapy]/2;
         }
         
         pt1.x = x;
