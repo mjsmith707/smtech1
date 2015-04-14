@@ -18,7 +18,7 @@
 #include "SMLine.h"
 #include "SMVector.h"
 #include "Minimap.h"
-#include "Raycaster.h"
+#include "Trashcaster.h"
 
 namespace smtech1 {
     class SMRenderer {
@@ -89,7 +89,7 @@ namespace smtech1 {
             SMVector normalize(const SMVector& vecta);
             SMVector project(const SMVector& vecta);
 
-            Raycaster raycaster;
+            Trashcaster trashcaster;
 
         public:
             SMRenderer(uint32_t width, uint32_t height);

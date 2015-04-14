@@ -7,7 +7,7 @@
 using namespace smtech1;
 
 // Initialize thread controls, width, height
-SMRenderer::SMRenderer(uint32_t width, uint32_t height) : renderThread(), renderRunning(false), width(width), height(height), raycaster(width, height) {
+SMRenderer::SMRenderer(uint32_t width, uint32_t height) : renderThread(), renderRunning(false), width(width), height(height), trashcaster(width, height) {
     player.x = static_cast<double>(width/2);
     player.y = static_cast<double>(height/2);
     player.z = 0.0;
@@ -80,8 +80,8 @@ void SMRenderer::threadinit() {
     mapactive = true;
     mapfullscreen = false;
 
-    // raycaster
-    raycaster.loadMap(lines);
+    // trashcaster
+    trashcaster.loadMap(lines);
 
     // Enter render loop
     render();
@@ -187,7 +187,7 @@ void SMRenderer::render() {
             
         //drawPixel(player.x, player.y, 0xFFFF66);
         
-        std::vector<SMLine> projectedLines = raycaster.raycast(position, angle);
+        std::vector<SMLine> projectedLines = trashcaster.raycast(position, angle);
         
         for (auto i : projectedLines) {
             drawLine(i.pt1.x, i.pt1.y, i.pt2.x, i.pt2.y, i.color);

@@ -1,23 +1,20 @@
 //
-//  Raycaster.cpp
+//  Trashcaster.cpp
 //  smtech1
 //
-//  Created by Matt on 4/13/15.
-//  Copyright (c) 2015 Matt. All rights reserved.
-//
 
-#include "Raycaster.h"
+#include "Trashcaster.h"
 using namespace smtech1;
 
 // tan(30) or tan(fov/2)? Need to brush up on my trig
 // 64 is wall size, 32 is player viewheight
 
-Raycaster::Raycaster(uint32_t width, uint32_t height) : width(width), height(height) {
+Trashcaster::Trashcaster(uint32_t width, uint32_t height) : width(width), height(height) {
     
 }
 
 // Load lines into a flat 2d array where -1 is a boundary otherwise a color
-void Raycaster::loadMap(std::vector<SMLine>& lines) {
+void Trashcaster::loadMap(std::vector<SMLine>& lines) {
     for (int y=0; y<height; y++) {
         for (int x=0; x<width; x++) {
             world[x][y] = 0;
@@ -39,7 +36,7 @@ void Raycaster::loadMap(std::vector<SMLine>& lines) {
     }
 }
 
-void Raycaster::drawLineToWorld(int x1, int y1, int x2, int y2, uint32_t color) {
+void Trashcaster::drawLineToWorld(int x1, int y1, int x2, int y2, uint32_t color) {
     // More debug bounds checking
     // Stop that long ass line draw
     if ((abs(x1) > 10000000) || (abs(y1) > 10000000) || (abs(x2) > 10000000) || (abs(y2) > 10000000)) {
@@ -82,7 +79,7 @@ void Raycaster::drawLineToWorld(int x1, int y1, int x2, int y2, uint32_t color) 
     }
 }
 
-std::vector<SMLine> Raycaster::raycast(SMVector pos, double angle) {
+std::vector<SMLine> Trashcaster::raycast(SMVector pos, double angle) {
     std::vector<SMLine> lines;
     // Compute direction vector
     direction.x = -cos(angle);
