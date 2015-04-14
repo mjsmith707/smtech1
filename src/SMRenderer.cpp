@@ -100,8 +100,8 @@ void SMRenderer::threadinit() {
 // Loads meshes into SMMesh objects for rendering
 // Will be replaced with a file format and more concrete Mesh structure
 void SMRenderer::initMeshes() {
-    
-    
+
+    /*
     SMVector a {315.0,35.0};
     SMVector b {210.0,70.0};
     SMVector c {105.0,175.0};
@@ -110,7 +110,7 @@ void SMRenderer::initMeshes() {
     SMVector f {420.0,315.0};
     SMVector g {525.0,185.0};
     SMVector h {525.0,35.0};
-    
+
     SMLine ab {a,b,0x003366}; // darkblue
     SMLine bc {b,c,0x669999}; // turquoise
     SMLine cd {c,d,0x339933}; // green
@@ -119,7 +119,7 @@ void SMRenderer::initMeshes() {
     SMLine fg {f,g,0xCC6600}; // orange
     SMLine gh {g,h,0xCC0000}; // red
     SMLine ha {h,a,0xCC0099}; // pink
-    
+
     lines.push_back(ab);
     lines.push_back(bc);
     lines.push_back(cd);
@@ -128,8 +128,9 @@ void SMRenderer::initMeshes() {
     lines.push_back(fg);
     lines.push_back(gh);
     lines.push_back(ha);
-     
     
+    */
+
     /*
     // Test Map 2
     SMVector a {315.0,230.0};
@@ -140,18 +141,41 @@ void SMRenderer::initMeshes() {
     SMVector f {325.0, 250.0};
     SMVector g {310.0, 235.0};
     SMVector h {310.0, 245.0};
-    
+
     SMLine ab {a,b,0x003366}; // darkblue
     SMLine cd {c,d,0x669999}; // turquoise
     SMLine ef {e,f,0x339933}; // green
     SMLine gh {g,h,0x333300}; // olive
-    
+
     lines.push_back(ab);
     lines.push_back(cd);
     lines.push_back(ef);
     lines.push_back(gh);
     */
-     
+
+    
+    // Test map 3
+    int mult = 150;
+    int offset = 100;
+    SMVector a{ 0 * mult + offset, 1 * mult + offset }, b{ 1 * mult + offset, 1 * mult + offset }, c{ 1 * mult + offset, 0 * mult + offset }, d{ 2 * mult + offset, 0 * mult + offset }, e{ 2 * mult + offset, 1 * mult + offset }, f{ 3 * mult + offset, 1 * mult + offset }, g{ 3 * mult + offset, 2 * mult + offset }, h{ 2 * mult + offset, 2 * mult + offset }, i{ 2 * mult + offset, 3 * mult + offset }, j{ 1 * mult + offset, 3 * mult + offset }, k{ 1 * mult + offset, 2 * mult + offset }, l{ 0 * mult + offset, 2 * mult + offset };
+    SMLine ab{ a, b, 0x00ff00 }, bc{ b, c, 0x003366 }, cd{ c, d, 0x669999 }, de{ d, e, 0x339933 }, ef{ e, f, 0x333300 }, fg{ f, g, 0xCCCC00 }, gh{ g, h, 0xCC6600 }, hi{ h, i, 0xCC0000 }, ij{ i, j, 0xCC0099 }, jk{ j, k, 0xAABB00 }, kl{ k, l, 0x00ff00 }, la{ l, a, 0x0f00f0 };
+    lines.push_back(ab);
+    lines.push_back(bc);
+    lines.push_back(cd);
+    lines.push_back(de);
+    lines.push_back(ef);
+    lines.push_back(fg);
+    lines.push_back(gh);
+    lines.push_back(hi);
+    lines.push_back(ij);
+    lines.push_back(jk);
+    lines.push_back(kl);
+    lines.push_back(la);
+
+    position.x = 247;
+    position.y = 326;
+    angle = 6.28319;
+    
 }
 
 // Main render thread loop function
@@ -207,16 +231,27 @@ void SMRenderer::render() {
                 minimap.intersections = intersections;
                 
                 for (auto i : intersections){
+                    double lineh = std::abs(((double)height / (double)i.dist));
+                    lineh *= 50.0;
+
+                    double drawStart = -lineh / 2.0 + (double)height / 2.0;
+                    double drawEnd = lineh / 2.0 + (double)height / 2.0;
+
+                    if (drawStart < 0) drawStart = 0;
+                    if (drawEnd >= height) drawEnd = height - 1;
+
+                    vLine(i.x, drawStart, drawEnd, i.line.color);
                     // pretty ghetto (and inefficient ! ! !), but it's something to show
                     
-                    if (i.dist < 1.0) i.dist = 1.0;
-                    double sliceHeight = player.y - (0.5 * player.y) + (32.0 / i.dist) * raycaster.planeDist;
-                    double roofHeight = player.y - (0.75 * player.y);
+                    //if (i.dist < 1.0) i.dist = 1.0;
+                    //double sliceHeight = player.y - (0.5 * player.y) + (32.0 / i.dist) * raycaster.planeDist;
+                    //double roofHeight = player.y - (0.75 * player.y);
                     // roof
                     //drawLine(x, 0, x, player.y - 0.5 * sliceHeight, 0x8c8c8c);
                     
                     // slice
-                    drawLine(i.x, player.y - 0.5 * sliceHeight, i.x, sliceHeight, i.line.color);
+                    //drawLine(i.x, player.y - 0.5 * sliceHeight, i.x, sliceHeight, i.line.color);
+                    
                     
                     // floor
                     //drawLine(x, sliceHeight, x, player.y * 2.0, 0x191919);
@@ -247,26 +282,27 @@ void SMRenderer::render() {
 }
 
 inline void SMRenderer::getInput(SDL_Event& event) {
+    
     while (SDL_PollEvent(&event)) {
         switch(event.type) {
             case SDL_KEYDOWN: {
                 std::cout << "keydown" << std::endl;
                 switch (event.key.keysym.sym) {
                     case SDLK_w:
-                        position.y -= sin(angle);
-						position.x -= cos(angle);
+                        position.y -= speed * sin(angle);
+						position.x -= speed * cos(angle);
                         break;
                     case SDLK_a:
-						position.y += sin(angle + (pi / 2.0));
-						position.x += cos(angle + (pi / 2.0));
+                        position.y += speed * sin(angle + (pi / 2.0));
+                        position.x += speed * cos(angle + (pi / 2.0));
                         break;
                     case SDLK_s:
-						position.y += sin(angle);
-						position.x += cos(angle);
+                        position.y += speed * sin(angle);
+                        position.x += speed * cos(angle);
                         break;
                     case SDLK_d:
-						position.y += sin(angle - (pi / 2.0));
-						position.x += cos(angle - (pi / 2.0));
+                        position.y += speed * sin(angle - (pi / 2.0));
+                        position.x += speed * cos(angle - (pi / 2.0));
                         break;
 					case SDLK_LEFT:
 						if (angle <= 0) {
@@ -275,7 +311,7 @@ inline void SMRenderer::getInput(SDL_Event& event) {
 						else if (angle >= pi2) {
 							angle = 0;
 						}
-						angle -= 0.05;
+						angle -= 0.01;
 						break;
 					case SDLK_RIGHT:
 						if (angle <= 0) {
@@ -284,7 +320,7 @@ inline void SMRenderer::getInput(SDL_Event& event) {
 						else if (angle >= pi2) {
 							angle = 0;
 						}
-						angle += 0.05;
+						angle += 0.01;
 						break;
                     case SDLK_ESCAPE:
                         if (mousemode) {
@@ -406,6 +442,11 @@ inline void SMRenderer::drawLine(int x1, int y1, int x2, int y2, uint32_t color)
 // convenience overload
 inline void SMRenderer::drawLine(SMLine line) {
     drawLine(line.pt1.x, line.pt1.y, line.pt2.x, line.pt2.y, line.color);
+}
+
+
+inline void SMRenderer::vLine(int x, int y1, int y2, uint32_t color) {
+    drawLine(x, y1, x, y2, color);
 }
 
 // Draw pixel to x,y coordinate

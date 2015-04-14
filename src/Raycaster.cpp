@@ -36,20 +36,22 @@ std::vector<RaycastHit> Raycaster::castLines(SMVector& player, SMVector& positio
 
     for (int a = 0; a < width; a++){
         for (auto i : lines){
-
-            // for removing view distortion
-            // almost not quite there
-            //double beta = ( -1.0 * 1.57079632679 / 2.0 ) + ((double)a) * (fov / (double)width);
-
             SMLine toIntersect = { project(i.pt1, angle, position, player), project(i.pt2, angle, position, player), i.color };
             SMVector intersect;
-            SMLine ray = { { player.x + planeDist * (-1.0 + 2.0 * ((double)a / (double)width)) * sin(fov / 2.0), player.y - planeDist }, { player.x + planeDist * (-1.0 + 2.0 * ((double)a / (double)width)) * sin(fov / 2.0) * 100.0, player.y - planeDist * 100.0 }, 0xFFFF00 };
+            SMLine ray = { { player.x, player.y}, { player.x + planeDist * (-1.0 + 2.0 * ((double)a / (double)width)) * sin(fov / 2.0) * 100.0, player.y - planeDist * 100.0 }, 0xFFFF00 };
 
             if (toIntersect.intersect(ray, intersect)){
+                // for removing view distortion
+                // almost not quite there
+                double beta = (-1.0 + 2.0 * ((double)a / (double)width)) * sin(fov / 2.0);
+                //if (a%10 == 0)
+                //std::cout << cos(beta) << " " ;
+
                 SMVector vec = intersect;
-                if (vec.y < player.y){
+
+                if (vec.y < player.y - planeDist){
                     SMLine line = toIntersect;
-                    double dist = std::sqrt(std::pow((position.y - intersect.y), 2.0) + std::pow((position.x - intersect.x), 2.0));
+                    double dist = std::sqrt(std::pow((player.y - intersect.y), 2.0) + std::pow((player.x - intersect.x), 2.0));
 
                     // removing view distortion
                     //dist *= cos(beta);
@@ -58,8 +60,8 @@ std::vector<RaycastHit> Raycaster::castLines(SMVector& player, SMVector& positio
                 }
             }
         }
-
     }
+    //std::cout << std::endl << std::endl << std::endl << std::endl;
 
     return projectedLines;
 }

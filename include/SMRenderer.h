@@ -54,6 +54,9 @@ namespace smtech1 {
             SMVector position;
             double angle = 4.78319;
 
+            // speed, a bit of a misnomer but it works for now
+            double speed = 2.0;
+
             // Bool to indicate whether the window has mouse grab
             bool mousemode = false;
 
@@ -75,6 +78,7 @@ namespace smtech1 {
             inline void drawPixel(int x, int y, uint32_t color);
             inline void drawLine(int x1, int y1, int x2, int y2, uint32_t color);
             inline void drawLine(SMLine line);
+            inline void vLine(int x, int y1, int y2, uint32_t  color);
             inline void drawHud();
             inline void drawMap();
 
