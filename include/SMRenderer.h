@@ -89,6 +89,13 @@ namespace smtech1 {
             SMVector normalize(const SMVector& vecta);
             SMVector project(const SMVector& vecta);
 
+            // Raycasters
+            enum RendererMode {
+                TRASHCASTER, DOOMCASTER
+            };
+        
+            RendererMode r_mode;
+        
             Trashcaster trashcaster;
 
         public:

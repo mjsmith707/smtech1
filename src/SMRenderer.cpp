@@ -14,6 +14,7 @@ SMRenderer::SMRenderer(uint32_t width, uint32_t height) : renderThread(), render
     position.x = static_cast<double>(width/2);
     position.y = static_cast<double>(height/2);
     position.z = 0.0;
+    r_mode = DOOMCASTER;
 }
 
 // Destructor shuts down thread before rejoining
@@ -186,12 +187,20 @@ void SMRenderer::render() {
         drawBlank();
             
         //drawPixel(player.x, player.y, 0xFFFF66);
-        
-        std::vector<SMLine> projectedLines = trashcaster.raycast(position, angle);
-        
-        for (auto i : projectedLines) {
-            drawLine(i.pt1.x, i.pt1.y, i.pt2.x, i.pt2.y, i.color);
+        switch (r_mode) {
+            case TRASHCASTER: {
+                std::vector<SMLine> projectedLines = trashcaster.raycast(position, angle);
+                
+                for (auto i : projectedLines) {
+                    drawLine(i.pt1.x, i.pt1.y, i.pt2.x, i.pt2.y, i.color);
+                }
+                break;
+            }
+            case DOOMCASTER: {
+                
+            }
         }
+        
         
         // Draw HUD Elements
         drawHud();
