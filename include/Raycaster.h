@@ -26,7 +26,7 @@ namespace smtech1 {
         int x;
         
         inline bool operator< (const RaycastHit& rhs) const {
-            return dist > rhs.dist;
+            return dist < rhs.dist;
         }
         
     } RaycastHit;

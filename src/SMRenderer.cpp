@@ -262,7 +262,10 @@ void SMRenderer::render() {
                 std::vector<RaycastHit> intersections = raycaster.castLines(player, position, angle, lines);
                 minimap.intersections = intersections;
                 
-                for (auto i : intersections){
+                while (!intersections.empty()) {
+                    RaycastHit i = intersections.front();
+                    std::pop_heap(intersections.begin(), intersections.end());
+                    intersections.pop_back();
                     double lineh = std::abs(((double)height / (double)i.dist));
                     lineh *= 50.0;
 

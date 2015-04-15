@@ -47,9 +47,6 @@ std::vector<RaycastHit> Raycaster::castLines(SMVector& player, SMVector& positio
         }
     }
 
-    // This might be redundant
-    std::sort_heap(projectedLines.begin(), projectedLines.end());
-    
     return projectedLines;
 }
 
