@@ -104,36 +104,6 @@ void SMRenderer::threadinit() {
     SDL_Quit();
 }
 
-void SMRenderer::morestuff() {
-    // dont want to rename abcd..
-    SMVector a {315.0,35.0};
-    SMVector b {210.0,70.0};
-    SMVector c {105.0,175.0};
-    SMVector d {105.0,290.0};
-    SMVector e {315.0,370.0};
-    SMVector f {420.0,315.0};
-    SMVector g {525.0,185.0};
-    SMVector h {525.0,35.0};
-    
-    SMLine ab {a,b,0x003366}; // darkblue
-    SMLine bc {b,c,0x669999}; // turquoise
-    SMLine cd {c,d,0x339933}; // green
-    SMLine de {d,e,0x333300}; // olive
-    SMLine ef {e,f,0xCCCC00}; // yellow
-    SMLine fg {f,g,0xCC6600}; // orange
-    SMLine gh {g,h,0xCC0000}; // red
-    SMLine ha {h,a,0xCC0099}; // pink
-    
-    lines.push_back(ab);
-    lines.push_back(bc);
-    lines.push_back(cd);
-    lines.push_back(de);
-    lines.push_back(ef);
-    lines.push_back(fg);
-    lines.push_back(gh);
-    lines.push_back(ha);
-}
-
 // Loads meshes into SMMesh objects for rendering
 // Will be replaced with a file format and more concrete Mesh structure
 void SMRenderer::initMeshes() {
@@ -215,6 +185,45 @@ void SMRenderer::initMeshes() {
     
     morestuff();
     
+}
+
+void SMRenderer::morestuff() {
+    // dont want to rename abcd..
+    SMVector a {315.0,35.0};
+    SMVector b {210.0,70.0};
+    SMVector c {105.0,175.0};
+    SMVector d {105.0,290.0};
+    SMVector e {315.0,370.0};
+    SMVector f {420.0,315.0};
+    SMVector g {525.0,185.0};
+    SMVector h {525.0,35.0};
+    
+    SMLine ab {a,b,0x003366}; // darkblue
+    SMLine bc {b,c,0x669999}; // turquoise
+    SMLine cd {c,d,0x339933}; // green
+    SMLine de {d,e,0x333300}; // olive
+    SMLine ef {e,f,0xCCCC00}; // yellow
+    SMLine fg {f,g,0xCC6600}; // orange
+    SMLine gh {g,h,0xCC0000}; // red
+    SMLine ha {h,a,0xCC0099}; // pink
+    
+    lines.push_back(ab);
+    lines.push_back(bc);
+    lines.push_back(cd);
+    lines.push_back(de);
+    lines.push_back(ef);
+    lines.push_back(fg);
+    lines.push_back(gh);
+    lines.push_back(ha);
+    
+    // Sprites
+    std::string f1 = "SAWGA0.bmp";
+    std::string f2 = "SAWGB0.bmp";
+    std::string f3 = "SAWGC0.bmp";
+    std::string f4 = "SAWGD0.bmp";
+    std::vector<std::string> sawfiles {f1,f2,f3,f4};
+    Sprite saw { sawfiles, 30 };
+    sprites.push_back(saw);
 }
 
 // Main render thread loop function
@@ -429,6 +438,16 @@ inline void SMRenderer::getInput(SDL_Event& event) {
                     angle += 0.01;
                 }
             }
+            case SDL_MOUSEBUTTONDOWN: {
+                if (!mousemode) {
+                    break;
+                }
+                else if (event.button.button == SDL_BUTTON_LEFT) {
+                    for (auto& i : sprites) {
+                        i.playAnimation();
+                    }
+                }
+            }
             std::cout << "position: <" << player.x << ", " << player.y << ">" << std::endl
             << "angle: " << angle << std::endl;
         }
@@ -537,6 +556,46 @@ inline void SMRenderer::drawHud() {
     drawMap();
     
     // Draw Gun model, etc.
+    drawSprites();
+}
+
+inline void SMRenderer::drawSprites() {
+    for (auto& i : sprites) {
+        if (i.isPlaying()) {
+            uint32_t bmpwidth = i.getWidth();
+            uint32_t bmpheight = i.getHeight();
+            // some kind of entity class for xrel/yrel
+            
+            BMP* bmp = i.cycleAnimation();
+            
+            drawBMP(bmpwidth, bmpheight, (width/2)-25, height-100, bmp);
+        }
+        else if (i.isStatic()) {
+            uint32_t bmpwidth = i.getWidth();
+            uint32_t bmpheight = i.getHeight();
+            
+            BMP* bmp = i.staticView();
+            drawBMP(bmpwidth, bmpheight, (width/2)-25, height-100, bmp);
+        }
+    }
+}
+
+inline void SMRenderer::drawBMP(const uint32_t bmpwidth, const uint32_t bmpheight, const uint32_t xrel, const uint32_t yrel, BMP* bmp) {
+    for (int bmpy=0; bmpy<bmpheight; bmpy++) {
+        for (int bmpx=0; bmpx<bmpwidth; bmpx++) {
+            RGBApixel bmppixel = bmp->GetPixel(bmpx, bmpy);
+            uint32_t pixel = 0;
+            pixel = ((unsigned char)bmppixel.Red << 24);
+            pixel += ((unsigned char)bmppixel.Green << 16);
+            pixel += ((unsigned char)bmppixel.Blue << 8);
+            pixel += ((unsigned char)bmppixel.Alpha);
+            
+            if (pixel == fakealpha) {
+                continue;
+            }
+            drawPixel(xrel+bmpx, yrel+bmpy, pixel);
+        }
+    }
 }
 
 // Will greatly simplify rendering order at the expensive of a second

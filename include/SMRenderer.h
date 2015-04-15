@@ -6,6 +6,7 @@
 #ifndef __smtech1__SMRenderer__
 #define __smtech1__SMRenderer__
 
+
 #include <cstdint>
 #include <iostream>
 #include <thread>
@@ -20,6 +21,9 @@
 #include "Minimap.h"
 #include "Trashcaster.h"
 #include "Raycaster.h"
+#include "EasyBMP_BMP.h"
+#include "EasyBMP_DataStructures.h"
+#include "Sprite.h"
 
 namespace smtech1 {
     class SMRenderer {
@@ -27,9 +31,8 @@ namespace smtech1 {
             // Chrono Millisecond typedef
             typedef std::chrono::duration<long, std::milli> msec;
         
-            //typedef enum ClipCode {
-            //    INSIDE = 0, LEFT = 1, RIGHT = 2, BOTTOM = 4, TOP = 8
-            //} ClipCode;
+            // color code 0x0c0f08
+            const uint32_t fakealpha = 0x0b0b0b00;    // CBA to fuck with pngs
 
             // Render thread and control
             std::thread renderThread;
@@ -61,8 +64,11 @@ namespace smtech1 {
             // Bool to indicate whether the window has mouse grab
             bool mousemode = false;
 
-            // Meshes to render
+            // Lines to render
             std::vector<SMLine> lines;
+        
+            // Sprites to render
+            std::vector<Sprite> sprites;
 
             // Minimap
             Minimap minimap;
@@ -73,7 +79,7 @@ namespace smtech1 {
             void threadinit();
             void render();
             void initMeshes();
-        void morestuff();
+            void morestuff();
 
             // Render functions
             inline void drawBlank();
@@ -83,12 +89,11 @@ namespace smtech1 {
             inline void vLine(int x, int y1, int y2, uint32_t  color);
             inline void drawHud();
             inline void drawMap();
+            inline void drawSprites();
+            inline void drawBMP(const uint32_t swidth, const uint32_t sheight, const uint32_t xrel, const uint32_t yrel, BMP* bmp);
 
             // Input handler
             inline void getInput(SDL_Event& event);
-        
-            // Line clipping helper
-            //ClipCode getClipping(double x, double y);
 
             // Vector functions
             inline double dotProduct(const SMVector& vecta, const SMVector& vectb);
