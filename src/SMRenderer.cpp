@@ -273,7 +273,7 @@ void SMRenderer::render() {
                     double drawEnd = lineh / 2.0 + (double)height / 2.0;
 
                     if (drawStart < 0) drawStart = 0;
-                    if (drawEnd >= height) drawEnd = height;
+                    if (drawEnd >= height) drawEnd = height-1;
 
 
                     // wallseg
@@ -482,39 +482,12 @@ inline void SMRenderer::vLine(int x, int y1, int y2, uint32_t color) {
 
 // Draw pixel to x,y coordinate
 inline void SMRenderer::drawPixel(int x, int y, uint32_t pixel) {
-    // Debugging bounds checking
-    if ((x >= width) || (x < 0) || (y >= height) || (y < 0)) {
-        return;
-    }
-
     // http://www.libsdl.org/release/SDL-1.2.15/docs/html/guidevideo.html
     int bpp = screen->format->BytesPerPixel;
     /* Here p is the address to the pixel we want to set */
     Uint8 *p = (Uint8 *)screen->pixels + y * screen->pitch + x * bpp;
 
-    // Could probably do away with all of this and use 4
-    switch(bpp) {
-        case 1:
-            *p = pixel;
-            break;
-        case 2:
-            *(Uint16 *)p = pixel;
-            break;
-        case 3:
-            if(SDL_BYTEORDER == SDL_BIG_ENDIAN) {
-                p[0] = (pixel >> 16) & 0xff;
-                p[1] = (pixel >> 8) & 0xff;
-                p[2] = pixel & 0xff;
-            } else {
-                p[0] = pixel & 0xff;
-                p[1] = (pixel >> 8) & 0xff;
-                p[2] = (pixel >> 16) & 0xff;
-            }
-            break;
-        case 4:
-            *(uint32_t*)p = pixel;
-            break;
-    }
+    *(uint32_t*)p = pixel;
 }
 
 // Draw 2D elements on top of rendered scene
