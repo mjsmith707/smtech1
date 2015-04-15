@@ -1,9 +1,14 @@
 //
 //  SMRenderer.cpp
 //  smtech1
-//
-#define __SNAIL__
+
+
 #include "SMRenderer.h"
+
+#if defined (__WINDOWS__) 
+    #define __SNAIL__
+#endif
+
 using namespace smtech1;
 
 // Initialize thread controls, width, height
