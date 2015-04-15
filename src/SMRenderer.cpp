@@ -97,6 +97,36 @@ void SMRenderer::threadinit() {
     SDL_Quit();
 }
 
+void SMRenderer::morestuff() {
+    // dont want to rename abcd..
+    SMVector a {315.0,35.0};
+    SMVector b {210.0,70.0};
+    SMVector c {105.0,175.0};
+    SMVector d {105.0,290.0};
+    SMVector e {315.0,370.0};
+    SMVector f {420.0,315.0};
+    SMVector g {525.0,185.0};
+    SMVector h {525.0,35.0};
+    
+    SMLine ab {a,b,0x003366}; // darkblue
+    SMLine bc {b,c,0x669999}; // turquoise
+    SMLine cd {c,d,0x339933}; // green
+    SMLine de {d,e,0x333300}; // olive
+    SMLine ef {e,f,0xCCCC00}; // yellow
+    SMLine fg {f,g,0xCC6600}; // orange
+    SMLine gh {g,h,0xCC0000}; // red
+    SMLine ha {h,a,0xCC0099}; // pink
+    
+    lines.push_back(ab);
+    lines.push_back(bc);
+    lines.push_back(cd);
+    lines.push_back(de);
+    lines.push_back(ef);
+    lines.push_back(fg);
+    lines.push_back(gh);
+    lines.push_back(ha);
+}
+
 // Loads meshes into SMMesh objects for rendering
 // Will be replaced with a file format and more concrete Mesh structure
 void SMRenderer::initMeshes() {
@@ -175,6 +205,8 @@ void SMRenderer::initMeshes() {
     position.x = 247;
     position.y = 326;
     angle = 6.28319;
+    
+    morestuff();
     
 }
 

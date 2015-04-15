@@ -13,6 +13,7 @@
 #include <cmath>
 #include <vector>
 #include <iostream>
+#include <algorithm>
 #include "SMLine.h"
 
 
@@ -23,6 +24,11 @@ namespace smtech1 {
         SMLine ray;
         double dist;
         int x;
+        
+        inline bool operator< (const RaycastHit& rhs) const {
+            return dist > rhs.dist;
+        }
+        
     } RaycastHit;
 
     class Raycaster {

@@ -27,9 +27,6 @@ Raycaster::Raycaster(uint32_t width, uint32_t height, uint32_t viewHeight, doubl
 std::vector<RaycastHit> Raycaster::castLines(SMVector& player, SMVector& position, double angle, std::vector<SMLine>& lines) {
     std::vector<RaycastHit> projectedLines;
 
-   
-
-
     for (int a = 0; a < width; a++){
         for (auto i : lines){
             SMLine toIntersect = { project(i.pt1, angle, position, player), project(i.pt2, angle, position, player), i.color };
@@ -44,11 +41,15 @@ std::vector<RaycastHit> Raycaster::castLines(SMVector& player, SMVector& positio
                     SMLine line = toIntersect;
                     double dist = std::sqrt(std::pow((player.y - intersect.y), 2.0) + std::pow((player.x - intersect.x), 2.0));
                     projectedLines.push_back(RaycastHit{ vec, line, ray, dist, a });
+                    std::push_heap(projectedLines.begin(), projectedLines.end());
                 }
             }
         }
     }
 
+    // This might be redundant
+    std::sort_heap(projectedLines.begin(), projectedLines.end());
+    
     return projectedLines;
 }
 
@@ -70,5 +71,3 @@ SMVector Raycaster::project(const SMVector& vecta, const double angle, const SMV
 
         return result;
 }
-
-

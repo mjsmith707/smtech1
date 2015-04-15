@@ -72,6 +72,7 @@ namespace smtech1 {
             void threadinit();
             void render();
             void initMeshes();
+        void morestuff();
 
             // Render functions
             inline void drawBlank();

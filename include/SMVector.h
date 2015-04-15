@@ -12,7 +12,13 @@ namespace smtech1 {
         double x;
         double y;
         double z;
+        
+        // Comparator overload for heap creation
+        inline bool operator< (const SMVector& rhs) {
+            return (z < rhs.z);
+        }
     } SMVector;
+    
 }
 
 #endif /* defined(__smtech1__SMVector__) */

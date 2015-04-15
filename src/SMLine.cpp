@@ -49,3 +49,8 @@ bool SMLine::intersect(SMLine other, SMVector& intersect){
     }
     return true;
 }
+
+// Comparator overload for heap creation
+inline bool SMLine::operator< (const SMLine& rhs) {
+    return std::tie(pt1.z, pt2.z) < std::tie(rhs.pt1.z, rhs.pt2.z);
+}

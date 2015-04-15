@@ -20,6 +20,7 @@ namespace smtech1 {
             uint32_t color;
             bool intersect(SMLine other, SMVector& intersect);
         
+            inline bool operator< (const SMLine& rhs);
     } SMLine;
 }
 
