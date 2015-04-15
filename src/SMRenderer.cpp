@@ -2,7 +2,7 @@
 //  SMRenderer.cpp
 //  smtech1
 //
-
+#define __SNAIL__
 #include "SMRenderer.h"
 using namespace smtech1;
 
@@ -65,6 +65,8 @@ void SMRenderer::threadinit() {
     else {
         // Grab SDL_Surface, draw initial blank screen
         screen = SDL_GetWindowSurface(window);
+        renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+        
         SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 0x0, 0x0, 0x0));
         SDL_UpdateWindowSurface(window);
     }
@@ -286,8 +288,11 @@ void SMRenderer::render() {
 
                     //floor
                     vLine(i.x, drawEnd, height, 0xAAAAAA );
-                    
                 }
+
+                // render stuff!
+                
+                
                 break;
             }
         }
@@ -296,7 +301,12 @@ void SMRenderer::render() {
         drawHud();
 
         // Flip buffer
+        
         SDL_UpdateWindowSurface(window);
+
+        #if defined (__SNAIL__)
+        SDL_RenderPresent(renderer);
+        #endif
 
         // Check for input
         // Will be spun off into a different class/thread someday
@@ -445,40 +455,45 @@ inline void SMRenderer::vLine(int x1, int y1, int y2, uint32_t color) {
 // http://rosettacode.org/wiki/Bitmap/Bresenham%27s_line_algorithm#C.2B.2B
 // Wasn't for lack of trying..
 inline void SMRenderer::drawLine(int x1, int y1, int x2, int y2, uint32_t color) {
-    const bool steep = (abs(y2 - y1) > abs(x2 - x1));
-    if (steep) {
-        std::swap(x1, y1);
-        std::swap(x2, y2);
-    }
-
-    if (x1 > x2) {
-        std::swap(x1, x2);
-        std::swap(y1, y2);
-    }
-
-    const float dx = x2 - x1;
-    const float dy = abs(y2 - y1);
-
-    float error = dx / 2.0f;
-    const int ystep = (y1 < y2) ? 1 : -1;
-    int y = (int)y1;
-
-    const int maxX = (int)x2;
-
-    for (int x=(int)x1; x<maxX; x++) {
-        if(steep) {
-            drawPixel(y,x, color);
-        }
-        else {
-            drawPixel(x,y, color);
+    #if defined(__SNAIL__)
+        SDL_SetRenderDrawColor(renderer, (color & 0xff0000) >> 16, (color & 0x00ff00) >> 8 , color & 0x0000ff, 0xff);
+        SDL_RenderDrawLine(renderer, x1, y1, x2, y2);
+    #else
+        const bool steep = (abs(y2 - y1) > abs(x2 - x1));
+        if (steep) {
+            std::swap(x1, y1);
+            std::swap(x2, y2);
         }
 
-        error -= dy;
-        if (error < 0) {
-            y += ystep;
-            error += dx;
+        if (x1 > x2) {
+            std::swap(x1, x2);
+            std::swap(y1, y2);
         }
-    }
+
+        const float dx = x2 - x1;
+        const float dy = abs(y2 - y1);
+
+        float error = dx / 2.0f;
+        const int ystep = (y1 < y2) ? 1 : -1;
+        int y = (int)y1;
+
+        const int maxX = (int)x2;
+
+        for (int x=(int)x1; x<maxX; x++) {
+            if(steep) {
+                drawPixel(y,x, color);
+            }
+            else {
+                drawPixel(x,y, color);
+            }
+
+            error -= dy;
+            if (error < 0) {
+                y += ystep;
+                error += dx;
+            }
+        }
+    #endif
 }
 
 // convenience overload

@@ -38,7 +38,8 @@ namespace smtech1 {
             // SDL pointers
             SDL_Window* window;
             SDL_Surface* screen;
-
+            SDL_Renderer* renderer;
+            
             // Screen width/height
             const uint32_t width;
             const uint32_t height;
