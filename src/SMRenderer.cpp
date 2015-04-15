@@ -288,7 +288,7 @@ void SMRenderer::render() {
                 break;
             }
             case DOOMCASTER: {
-                std::vector<RaycastHit> intersections = raycaster.castLines(player, position, angle, lines);
+                std::vector<RaycastHit> intersections = raycaster.castLines(position, angle, lines);
                 minimap.intersections = intersections;
                 
                 while (!intersections.empty()) {
@@ -636,6 +636,7 @@ inline void SMRenderer::drawMap() {
         drawLine(minimap.tr.x, minimap.bl.y, minimap.tr.x, minimap.tr.y, minimap.boxcolor);
     }
     else {
+        /*
         for (auto i : minimap.intersections){
             if (i.x % 30 == 0){
                 SMVector p1 = i.ray.pt1;
@@ -647,6 +648,7 @@ inline void SMRenderer::drawMap() {
                 drawPixel(i.vec.x, i.vec.y, 0xffffff);
             }
         }
+         */
 
         //drawLine(raycaster.debugLines.projectionPlane);
         //drawLine(raycaster.debugLines.leftPlane);

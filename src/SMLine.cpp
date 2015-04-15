@@ -2,7 +2,7 @@
 
 using namespace smtech1;
 
-bool SMLine::intersect(SMLine other, SMVector& intersect){
+bool SMLine::intersect(SMLine& other, SMVector& intersect){
     double x1 = pt1.x;
     double x2 = pt2.x;
     double x3 = other.pt1.x;
