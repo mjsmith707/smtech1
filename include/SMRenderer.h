@@ -105,6 +105,10 @@ namespace smtech1 {
             Trashcaster trashcaster;
             Raycaster raycaster;
 
+            // graphics things
+            inline double smoothstep(double min, double max, double val);
+            inline uint32_t dim(uint32_t color, uint32_t amount);
+
         public:
             SMRenderer(uint32_t width, uint32_t height);
             ~SMRenderer();

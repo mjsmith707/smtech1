@@ -241,23 +241,10 @@ void SMRenderer::render() {
                     if (drawEnd >= height) drawEnd = height;
 
 
-                    // TODO fix
-                    // smoothstep-ish implementation
-                    double ssin = i.dist;
-
-                    // edge1 and edge2, for clamping
-                    double e1 = 0;
-                    double e2 = 100;
-                    ssin = (ssin - e1) / (e2 - e1);
-                    if (ssin < 0) ssin = 0;
-                    if (ssin > e2) ssin = e2;
-
-                    double intensity = 3.0 * std::pow(ssin, 2.0) - 2.0 * std::pow(ssin, 3.0);
-
                     // wallseg
                     // trippy effect
                     //vLine(i.x, drawStart, drawEnd, i.line.color * (i.dist / 500)); 
-                    vLine(i.x, drawStart, drawEnd, i.line.color * ((uint32_t)intensity)); 
+                    vLine(i.x, drawStart, drawEnd, dim(i.line.color, 200.0 * smoothstep(0.0, 500.0, i.dist)));
                     
                     // roof
                     vLine(i.x, 0, drawStart, 0x111111);
@@ -606,4 +593,45 @@ SMVector SMRenderer::project(const SMVector& vect) {
     result.y = result.x / result.y + player.y;
 
     return result;
+}
+
+inline double SMRenderer::smoothstep(double min, double max, double val){
+    // get 0 < smoothed < 1
+    double smoothed = (val - min) / (max - min);
+
+    // clamp
+    if (smoothed < 0.0) smoothed = 0.0;
+    if (smoothed > 1.0) smoothed = 1.0;
+
+    // return smoothstep, f(x) = 3x^2 - 2x^3 
+    return smoothed * smoothed * (3.0 - 2.0 * smoothed);
+}
+
+inline uint32_t SMRenderer::dim(uint32_t color, uint32_t amount){
+    uint32_t red = (color & 0xff0000) >> 16;
+    uint32_t green = (color & 0x00ff00) >> 8;
+    uint32_t blue = color & 0x0000ff;
+
+    if (red < amount){
+        red = 0;
+    }
+    else {
+        red -= amount;
+    }
+
+    if (green < amount){
+        green = 0;
+    }
+    else {
+        green -= amount;
+    }
+
+    if (blue < amount){
+        blue = 0;
+    }
+    else {
+        blue -= amount;
+    }
+
+    return red << 16 | green << 8 | blue;
 }
