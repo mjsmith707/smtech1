@@ -247,9 +247,13 @@ void SMRenderer::render() {
                 fps = 0;
             }
         #endif
-        
-        // Erase framebuffer
-        drawBlank();
+        #if defined(__SNAIL__)
+            SDL_SetRenderDrawColor(renderer, 0x0, 0x0, 0x0, 0xff);
+            SDL_RenderClear(renderer);
+        #else
+            // Erase framebuffer
+            drawBlank();
+        #endif
         
         switch (r_mode) {
             case TRASHCASTER: {
@@ -289,9 +293,6 @@ void SMRenderer::render() {
                     //floor
                     vLine(i.x, drawEnd, height, 0xAAAAAA );
                 }
-
-                // render stuff!
-                
                 
                 break;
             }
@@ -300,12 +301,11 @@ void SMRenderer::render() {
         // Draw HUD Elements
         drawHud();
 
-        // Flip buffer
-        
-        SDL_UpdateWindowSurface(window);
-
         #if defined (__SNAIL__)
-        SDL_RenderPresent(renderer);
+            SDL_RenderPresent(renderer);
+        #else 
+            // Flip buffer
+            SDL_UpdateWindowSurface(window);
         #endif
 
         // Check for input
@@ -323,7 +323,6 @@ void SMRenderer::render() {
 }
 
 inline void SMRenderer::getInput(SDL_Event& event) {
-    
     while (SDL_PollEvent(&event)) {
         switch(event.type) {
             case SDL_KEYDOWN: {
@@ -442,13 +441,17 @@ inline void SMRenderer::drawBlank() {
 
 // Vertical Line
 inline void SMRenderer::vLine(int x1, int y1, int y2, uint32_t color) {
-    if (y1 > y2) {
-        std::swap(y1, y2);
-    }
+    #if defined(__SNAIL__)
+        drawLine(x1, y1, x1, y2, color);
+    #else
+        if (y1 > y2) {
+            std::swap(y1, y2);
+        }
     
-    for (int y=y1; y<y2; y++) {
-        drawPixel(x1, y, color);
-    }
+        for (int y=y1; y<y2; y++) {
+            drawPixel(x1, y, color);
+        }
+    #endif
 }
 
 // Bresenham line algorithm for _all_ octants
@@ -511,12 +514,16 @@ inline void SMRenderer::drawLine(SMLine line) {
 
 // Draw pixel to x,y coordinate
 inline void SMRenderer::drawPixel(int x, int y, uint32_t pixel) {
+    #if defined (__SNAIL__)
+        
+    # else 
     // http://www.libsdl.org/release/SDL-1.2.15/docs/html/guidevideo.html
     int bpp = screen->format->BytesPerPixel;
     /* Here p is the address to the pixel we want to set */
     Uint8 *p = (Uint8 *)screen->pixels + y * screen->pitch + x * bpp;
 
     *(uint32_t*)p = pixel;
+    #endif
 }
 
 // Draw 2D elements on top of rendered scene
