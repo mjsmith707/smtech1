@@ -217,13 +217,22 @@ void SMRenderer::morestuff() {
     lines.push_back(ha);
     
     // Sprites
-    std::string f1 = "SAWGA0.bmp";
-    std::string f2 = "SAWGB0.bmp";
-    std::string f3 = "SAWGC0.bmp";
-    std::string f4 = "SAWGD0.bmp";
-    std::vector<std::string> sawfiles {f1,f2,f3,f4};
-    Sprite saw { sawfiles, 30 };
+    std::string saw1 = "SAWGA0.bmp";
+    std::string saw2 = "SAWGB0.bmp";
+    std::string saw3 = "SAWGC0.bmp";
+    std::string saw4 = "SAWGD0.bmp";
+    std::vector<std::string> sawfiles {saw1,saw2,saw3,saw4};
+    Sprite saw { sawfiles, 30, (width/2)-30, height-100, false};
     sprites.push_back(saw);
+    
+    std::string dg1 = "STFST30.bmp";
+    std::string dg2 = "STFST31.bmp";
+    std::string dg3 = "STFST32.bmp";
+    std::string dg4 = "STFTL30.bmp";
+    std::string dg5 = "STFTR30.bmp";
+    std::vector<std::string> doomguyfiles {dg1,dg2,dg3,dg4,dg5};
+    Sprite doomguy { doomguyfiles, 75, (width/2)-30, height-40, true };
+    sprites.push_back(doomguy);
 }
 
 // Main render thread loop function
@@ -266,7 +275,7 @@ void SMRenderer::render() {
             SDL_RenderClear(renderer);
         #else
             // Erase framebuffer
-            drawBlank();
+            //drawBlank();
         #endif
         
         switch (r_mode) {
@@ -443,8 +452,9 @@ inline void SMRenderer::getInput(SDL_Event& event) {
                     break;
                 }
                 else if (event.button.button == SDL_BUTTON_LEFT) {
-                    for (auto& i : sprites) {
-                        i.playAnimation();
+                    // I didn't really think this part though yet
+                    if (sprites.size() > 0) {
+                        sprites.at(0).playAnimation();
                     }
                 }
             }
@@ -568,14 +578,14 @@ inline void SMRenderer::drawSprites() {
             
             BMP* bmp = i.cycleAnimation();
             
-            drawBMP(bmpwidth, bmpheight, (width/2)-25, height-100, bmp);
+            drawBMP(bmpwidth, bmpheight, i.xrel, i.yrel, bmp);
         }
         else if (i.isStatic()) {
             uint32_t bmpwidth = i.getWidth();
             uint32_t bmpheight = i.getHeight();
             
             BMP* bmp = i.staticView();
-            drawBMP(bmpwidth, bmpheight, (width/2)-25, height-100, bmp);
+            drawBMP(bmpwidth, bmpheight, i.xrel, i.yrel, bmp);
         }
     }
 }
@@ -585,8 +595,8 @@ inline void SMRenderer::drawBMP(const uint32_t bmpwidth, const uint32_t bmpheigh
         for (int bmpx=0; bmpx<bmpwidth; bmpx++) {
             RGBApixel bmppixel = bmp->GetPixel(bmpx, bmpy);
             uint32_t pixel = 0;
-            pixel = ((unsigned char)bmppixel.Red << 24);
-            pixel += ((unsigned char)bmppixel.Green << 16);
+            pixel = ((unsigned char)bmppixel.Green << 24);
+            pixel += ((unsigned char)bmppixel.Red << 16);
             pixel += ((unsigned char)bmppixel.Blue << 8);
             pixel += ((unsigned char)bmppixel.Alpha);
             

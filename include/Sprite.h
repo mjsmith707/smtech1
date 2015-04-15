@@ -24,8 +24,11 @@ namespace smtech1 {
         uint32_t delaycount;
         bool playing;
         bool staticview;
+        bool loop;
     public:
-        Sprite(std::vector<std::string> filenames, uint32_t delay);
+        uint32_t xrel;
+        uint32_t yrel;
+        Sprite(std::vector<std::string> filenames, uint32_t delay, uint32_t xrel, uint32_t yrel, bool loop);
         void playAnimation();
         bool isPlaying();
         bool isStatic();
