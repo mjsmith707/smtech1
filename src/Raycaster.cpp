@@ -47,7 +47,7 @@ std::vector<RaycastHit> Raycaster::castLines(SMVector& position, double angle, s
         }
     }
 
-    return std::move(projectedLines);
+    return projectedLines;
 }
 
 SMVector Raycaster::project(const SMVector& vecta, const double angle, const SMVector& position){
