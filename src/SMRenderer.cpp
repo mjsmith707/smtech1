@@ -430,6 +430,17 @@ inline void SMRenderer::drawBlank() {
     }
 }
 
+// Vertical Line
+inline void SMRenderer::vLine(int x1, int y1, int y2, uint32_t color) {
+    if (y1 > y2) {
+        std::swap(y1, y2);
+    }
+    
+    for (int y=y1; y<y2; y++) {
+        drawPixel(x1, y, color);
+    }
+}
+
 // Bresenham line algorithm for _all_ octants
 // http://rosettacode.org/wiki/Bitmap/Bresenham%27s_line_algorithm#C.2B.2B
 // Wasn't for lack of trying..
@@ -481,10 +492,6 @@ inline void SMRenderer::drawLine(SMLine line) {
     if (line.pt2.y < 0) line.pt2.y = 0;
     else if (line.pt2.y >= height) line.pt2.y = height-1;
     drawLine(line.pt1.x, line.pt1.y, line.pt2.x, line.pt2.y, line.color);
-}
-
-inline void SMRenderer::vLine(int x, int y1, int y2, uint32_t color) {
-    drawLine(x, y1, x, y2, color);
 }
 
 // Draw pixel to x,y coordinate
