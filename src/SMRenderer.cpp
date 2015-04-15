@@ -472,9 +472,16 @@ inline void SMRenderer::drawLine(int x1, int y1, int x2, int y2, uint32_t color)
 
 // convenience overload
 inline void SMRenderer::drawLine(SMLine line) {
+    if (line.pt1.x < 0) line.pt1.x = 0;
+    else if (line.pt1.x >= width) line.pt1.x = width-1;
+    if (line.pt1.y < 0) line.pt1.y = 0;
+    else if (line.pt1.y >= height) line.pt1.y = height-1;
+    if (line.pt2.x < 0) line.pt2.x = 0;
+    else if (line.pt2.x >= width) line.pt2.x = width-1;
+    if (line.pt2.y < 0) line.pt2.y = 0;
+    else if (line.pt2.y >= height) line.pt2.y = height-1;
     drawLine(line.pt1.x, line.pt1.y, line.pt2.x, line.pt2.y, line.color);
 }
-
 
 inline void SMRenderer::vLine(int x, int y1, int y2, uint32_t color) {
     drawLine(x, y1, x, y2, color);
@@ -526,20 +533,21 @@ inline void SMRenderer::drawMap() {
         drawLine(minimap.tr.x, minimap.bl.y, minimap.tr.x, minimap.tr.y, minimap.boxcolor);
     }
     else {
-        
         for (auto i : minimap.intersections){
             if (i.x % 30 == 0){
                 SMVector p1 = i.ray.pt1;
                 SMVector p2 = i.ray.pt2;
-
+                
+                
+                
                 drawLine(p1.x, p1.y, p2.x, p2.y, i.line.color);
                 drawPixel(i.vec.x, i.vec.y, 0xffffff);
             }
         }
 
-        drawLine(raycaster.debugLines.projectionPlane);
-        drawLine(raycaster.debugLines.leftPlane);
-        drawLine(raycaster.debugLines.rightPlane);
+        //drawLine(raycaster.debugLines.projectionPlane);
+        //drawLine(raycaster.debugLines.leftPlane);
+        //drawLine(raycaster.debugLines.rightPlane);
 
     }
 }
