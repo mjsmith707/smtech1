@@ -99,7 +99,7 @@ void SMRenderer::threadinit() {
     // raycaster
     //1.047197551196597746154 /* 60deg in rad */
     //1.57079632679489661923132 /* 90deg in rad */
-    raycaster = Raycaster(width, height, 32, 1.047197551196597746154 /* 60deg in rad */, 64, player, 8);
+    raycaster = Raycaster(width, height, 32, 1.047197551196597746154 /* 60deg in rad */, 64, player, 4);
 
     // Enter render loop
     render();
@@ -111,7 +111,7 @@ void SMRenderer::threadinit() {
 // Loads meshes into SMMesh objects for rendering
 // Will be replaced with a file format and more concrete Mesh structure
 void SMRenderer::initMeshes() {
-    std::string filename = "test.txt";
+    std::string filename = "dm1.txt";
     MapLoader maploader;
     lines = maploader.loadMap(filename);
 }
@@ -353,7 +353,7 @@ inline void SMRenderer::getInput(SDL_Event& event) {
                     else if (angle >= pi2) {
                         angle = 0;
                     }
-                    angle -= 0.01;
+                    angle -= 0.04;
                 }
                 else if (event.motion.xrel > 0) {
                     if (angle <= 0) {
@@ -362,7 +362,7 @@ inline void SMRenderer::getInput(SDL_Event& event) {
                     else if (angle >= pi2) {
                         angle = 0;
                     }
-                    angle += 0.01;
+                    angle += 0.04;
                 }
             }
             case SDL_MOUSEBUTTONDOWN: {

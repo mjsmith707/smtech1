@@ -41,7 +41,7 @@ std::vector<RaycastHit> Raycaster::castLines(SMVector& position, double angle, s
                 if (vec.y < player.y - planeDist){
                     SMLine line = toIntersect;
                     double dist = std::sqrt(std::pow((player.y - intersect.y), 2.0) + std::pow((player.x - intersect.x), 2.0));
-                    projectedLines.push_back(RaycastHit{ vec, line, ray, dist, (a * castGap) });
+                    projectedLines.push_back(RaycastHit{ vec, line, ray, dist, static_cast<int>((a * castGap)) });
                     std::push_heap(projectedLines.begin(), projectedLines.end());
                 }
             }

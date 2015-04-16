@@ -60,7 +60,7 @@ namespace smtech1 {
             double angle = 4.78319;
 
             // speed, a bit of a misnomer but it works for now
-            double speed = 2.0;
+            double speed = 6.0;
 
             // Bool to indicate whether the window has mouse grab
             bool mousemode = false;
