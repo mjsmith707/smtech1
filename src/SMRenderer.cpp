@@ -522,7 +522,7 @@ inline void SMRenderer::drawBMP(const uint32_t bmpwidth, const uint32_t bmpheigh
             if (pixel == fakealpha) {
                 continue;
             }
-            drawPixel(xrel+bmpx, yrel+bmpy, pixel);
+            drawPixel(xrel+bmpx > width ? width-1 : xrel+bmpx, yrel+bmpy > height ? height-1 : yrel+bmpy, pixel);
         }
     }
 }
