@@ -81,6 +81,9 @@ void SMRenderer::threadinit() {
 
     // Create some render data
     initMeshes();
+    
+    // Load 2D Sprites
+    initSprites();
 
     // minimap init
     SMVector mapbl = { 10.0, 10.0, 0 };
@@ -90,7 +93,8 @@ void SMRenderer::threadinit() {
     mapfullscreen = false;
 
     // trashcaster
-    trashcaster.loadMap(lines);
+    //it's broken so forget it
+    //trashcaster.loadMap(lines);
     
     // raycaster
     //1.047197551196597746154 /* 60deg in rad */
@@ -107,116 +111,17 @@ void SMRenderer::threadinit() {
 // Loads meshes into SMMesh objects for rendering
 // Will be replaced with a file format and more concrete Mesh structure
 void SMRenderer::initMeshes() {
-
-    /*
-    SMVector a {315.0,35.0};
-    SMVector b {210.0,70.0};
-    SMVector c {105.0,175.0};
-    SMVector d {105.0,290.0};
-    SMVector e {315.0,370.0};
-    SMVector f {420.0,315.0};
-    SMVector g {525.0,185.0};
-    SMVector h {525.0,35.0};
-
-    SMLine ab {a,b,0x003366}; // darkblue
-    SMLine bc {b,c,0x669999}; // turquoise
-    SMLine cd {c,d,0x339933}; // green
-    SMLine de {d,e,0x333300}; // olive
-    SMLine ef {e,f,0xCCCC00}; // yellow
-    SMLine fg {f,g,0xCC6600}; // orange
-    SMLine gh {g,h,0xCC0000}; // red
-    SMLine ha {h,a,0xCC0099}; // pink
-
-    lines.push_back(ab);
-    lines.push_back(bc);
-    lines.push_back(cd);
-    lines.push_back(de);
-    lines.push_back(ef);
-    lines.push_back(fg);
-    lines.push_back(gh);
-    lines.push_back(ha);
-    
-    */
-
-    /*
-    // Test Map 2
-    SMVector a {315.0,230.0};
-    SMVector b {325.0,230.0};
-    SMVector c {330.0,235.0};
-    SMVector d {330.0, 245.0};
-    SMVector e {315.0,250.0};
-    SMVector f {325.0, 250.0};
-    SMVector g {310.0, 235.0};
-    SMVector h {310.0, 245.0};
-
-    SMLine ab {a,b,0x003366}; // darkblue
-    SMLine cd {c,d,0x669999}; // turquoise
-    SMLine ef {e,f,0x339933}; // green
-    SMLine gh {g,h,0x333300}; // olive
-
-    lines.push_back(ab);
-    lines.push_back(cd);
-    lines.push_back(ef);
-    lines.push_back(gh);
-    */
-
-    
-    // Test map 3
-    int mult = 150;
-    int offset = 100;
-    SMVector a{ static_cast<double>(0 * mult + offset), static_cast<double>(1 * mult + offset) }, b{ static_cast<double>(1 * mult + offset), static_cast<double>(1 * mult + offset) }, c{ static_cast<double>(1 * mult + offset), static_cast<double>(0 * mult + offset) }, d{ static_cast<double>(2 * mult + offset), static_cast<double>(0 * mult + offset) }, e{ static_cast<double>(2 * mult + offset), static_cast<double>(1 * mult + offset) }, f{ static_cast<double>(3 * mult + offset), static_cast<double>(1 * mult + offset) }, g{ static_cast<double>(3 * mult + offset), static_cast<double>(2 * mult + offset) }, h{ static_cast<double>(2 * mult + offset), static_cast<double>(2 * mult + offset) }, i{ static_cast<double>(2 * mult + offset), static_cast<double>(3 * mult + offset) }, j{ static_cast<double>(1 * mult + offset), static_cast<double>(3 * mult + offset) }, k{ static_cast<double>(1 * mult + offset), static_cast<double>(2 * mult + offset) }, l{ static_cast<double>(0 * mult + offset), static_cast<double>(2 * mult + offset) };
-    SMLine ab{ a, b, 0x00ff00 }, bc{ b, c, 0x003366 }, cd{ c, d, 0x669999 }, de{ d, e, 0x339933 }, ef{ e, f, 0x333300 }, fg{ f, g, 0xCCCC00 }, gh{ g, h, 0xCC6600 }, hi{ h, i, 0xCC0000 }, ij{ i, j, 0xCC0099 }, jk{ j, k, 0xAABB00 }, kl{ k, l, 0x00ff00 }, la{ l, a, 0x0f00f0 };
-    lines.push_back(ab);
-    lines.push_back(bc);
-    lines.push_back(cd);
-    lines.push_back(de);
-    lines.push_back(ef);
-    lines.push_back(fg);
-    lines.push_back(gh);
-    lines.push_back(hi);
-    lines.push_back(ij);
-    lines.push_back(jk);
-    lines.push_back(kl);
-    lines.push_back(la);
-
-    position.x = 247;
-    position.y = 326;
-    angle = 6.28319;
-    
-    morestuff();
-    
+    std::string filename = "test.txt";
+    MapLoader maploader;
+    lines = maploader.loadMap(filename);
 }
 
-void SMRenderer::morestuff() {
-    // dont want to rename abcd..
-    SMVector a {315.0,35.0};
-    SMVector b {210.0,70.0};
-    SMVector c {105.0,175.0};
-    SMVector d {105.0,290.0};
-    SMVector e {315.0,370.0};
-    SMVector f {420.0,315.0};
-    SMVector g {525.0,185.0};
-    SMVector h {525.0,35.0};
-    
-    SMLine ab {a,b,0x003366}; // darkblue
-    SMLine bc {b,c,0x669999}; // turquoise
-    SMLine cd {c,d,0x339933}; // green
-    SMLine de {d,e,0x333300}; // olive
-    SMLine ef {e,f,0xCCCC00}; // yellow
-    SMLine fg {f,g,0xCC6600}; // orange
-    SMLine gh {g,h,0xCC0000}; // red
-    SMLine ha {h,a,0xCC0099}; // pink
-    
-    lines.push_back(ab);
-    lines.push_back(bc);
-    lines.push_back(cd);
-    lines.push_back(de);
-    lines.push_back(ef);
-    lines.push_back(fg);
-    lines.push_back(gh);
-    lines.push_back(ha);
-    
+void SMRenderer::initSprites() {
     // Sprites
+    // Slot 0 in sprites is gun uhhehherr
+    // Slot 1 is doomguy
+    /*
+    // Chainsaw
     std::string saw1 = "SAWGA0.bmp";
     std::string saw2 = "SAWGB0.bmp";
     std::string saw3 = "SAWGC0.bmp";
@@ -224,7 +129,16 @@ void SMRenderer::morestuff() {
     std::vector<std::string> sawfiles {saw1,saw2,saw3,saw4};
     Sprite saw { sawfiles, 30, (width/2)-30, height-100, false};
     sprites.push_back(saw);
+    */
+    std::string sg1 = "SHTGA0.bmp";
+    std::string sg2 = "SHTGB0.bmp";
+    std::string sg3 = "SHTGC0.bmp";
+    std::string sg4 = "SHTGD0.bmp";
+    std::vector<std::string> sgfiles {sg1,sg2,sg3,sg4};
+    Sprite shotgun { sgfiles, 10, (width/2)-40, height-100, false};
+    sprites.push_back(shotgun);
     
+    // Doomguy
     std::string dg1 = "STFST30.bmp";
     std::string dg2 = "STFST31.bmp";
     std::string dg3 = "STFST32.bmp";
@@ -279,14 +193,6 @@ void SMRenderer::render() {
         #endif
         
         switch (r_mode) {
-            case TRASHCASTER: {
-                std::vector<SMLine> projectedLines = trashcaster.raycast(position, angle);
-                
-                for (auto i : projectedLines) {
-                    drawLine(i.pt1.x, i.pt1.y, i.pt2.x, i.pt2.y, i.color);
-                }
-                break;
-            }
             case DOOMCASTER: {
                 std::vector<RaycastHit> intersections = raycaster.castLines(position, angle, lines);
                 minimap.intersections = intersections;
@@ -317,6 +223,16 @@ void SMRenderer::render() {
                     vLine(i.x, drawEnd, height, 0xAAAAAA );
                 }
                 
+                break;
+            }
+            case TRASHCASTER: {
+                /*
+                std::vector<SMLine> projectedLines = trashcaster.raycast(position, angle);
+                
+                for (auto i : projectedLines) {
+                    drawLine(i.pt1.x, i.pt1.y, i.pt2.x, i.pt2.y, i.color);
+                }
+                 */
                 break;
             }
         }

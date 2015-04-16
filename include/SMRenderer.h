@@ -24,6 +24,7 @@
 #include "EasyBMP_BMP.h"
 #include "EasyBMP_DataStructures.h"
 #include "Sprite.h"
+#include "MapLoader.h"
 
 namespace smtech1 {
     class SMRenderer {
@@ -79,7 +80,7 @@ namespace smtech1 {
             void threadinit();
             void render();
             void initMeshes();
-            void morestuff();
+            void initSprites();
 
             // Render functions
             inline void drawBlank();
