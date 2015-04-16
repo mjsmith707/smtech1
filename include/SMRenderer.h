@@ -33,7 +33,7 @@ namespace smtech1 {
             typedef std::chrono::duration<long, std::milli> msec;
         
             // color code 0x0c0f08
-            const uint32_t fakealpha = 0x0b0b0b00;    // CBA to fuck with pngs
+            const uint32_t fakealpha = 0x000b0b0b;    // CBA to fuck with pngs
 
             // Render thread and control
             std::thread renderThread;

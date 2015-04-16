@@ -514,10 +514,10 @@ inline void SMRenderer::drawBMP(const uint32_t bmpwidth, const uint32_t bmpheigh
         for (int bmpx=0; bmpx<bmpwidth; bmpx++) {
             RGBApixel bmppixel = bmp->GetPixel(bmpx, bmpy);
             uint32_t pixel = 0;
-            pixel = ((unsigned char)bmppixel.Green << 24);
+            pixel = ((unsigned char)bmppixel.Alpha << 24);
             pixel += ((unsigned char)bmppixel.Red << 16);
-            pixel += ((unsigned char)bmppixel.Blue << 8);
-            pixel += ((unsigned char)bmppixel.Alpha);
+            pixel += ((unsigned char)bmppixel.Green << 8);
+            pixel += ((unsigned char)bmppixel.Blue);
             
             if (pixel == fakealpha) {
                 continue;
