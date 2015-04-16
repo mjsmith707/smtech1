@@ -25,23 +25,18 @@ SMVector Minimap::project(const SMVector& vect, const double angle, const SMVect
     result.x += bl.x + 0.5 * tr.x;
     result.y += bl.y + 0.5 * tr.y;
 
-    // this is broken so fuck it 
-    /*
-    // make sure we don't draw outside of minimap bounds
-    if (result.x < bl.x){
-        result.x -= bl.x;
+    if (result.x < 0){
+        result.x = 0;
     }
-    else if (result.x > tr.x){
-        result.x -= tr.x;
+    if (result.x > player.x * 2){
+        result.x = player.x * 2 - 2;
     }
-
-    if (result.y < bl.y){
-        result.y -= bl.y;
+    if (result.y < 0){
+        result.y = 0;
     }
-    else if (result.y > tr.y){
-        result.y -= tr.y;
+    if (result.y > player.y * 2){
+        result.y = player.y * 2 - 2;
     }
-    */
 
     return result;
 }

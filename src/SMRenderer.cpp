@@ -6,7 +6,7 @@
 #include "SMRenderer.h"
 
 #if defined (__WINDOWS__) 
-    #define __SNAIL__
+    //#define __SNAIL__
 #endif
 
 using namespace smtech1;
@@ -99,7 +99,7 @@ void SMRenderer::threadinit() {
     // raycaster
     //1.047197551196597746154 /* 60deg in rad */
     //1.57079632679489661923132 /* 90deg in rad */
-    raycaster = Raycaster(width, height, 32, 1.047197551196597746154 /* 60deg in rad */, 64, player);
+    raycaster = Raycaster(width, height, 32, 1.047197551196597746154 /* 60deg in rad */, 64, player, 8);
 
     // Enter render loop
     render();
@@ -214,13 +214,15 @@ void SMRenderer::render() {
                     // wallseg
                     // trippy effect
                     //vLine(i.x, drawStart, drawEnd, i.line.color * (i.dist / 500)); 
-                    vLine(i.x, drawStart, drawEnd, dim(i.line.color, 200.0 * smoothstep(0.0, 500.0, i.dist)));
-                    
-                    // roof
-                    vLine(i.x, 0, drawStart, 0x111111);
+                    for (int d = 0; d < raycaster.castGap; d++){
+                        vLine(i.x + d, drawStart, drawEnd, dim(i.line.color, 200.0 * smoothstep(0.0, 500.0, i.dist)));
 
-                    //floor
-                    vLine(i.x, drawEnd, height, 0xAAAAAA );
+                        // roof
+                        vLine(i.x + d, 0, drawStart, 0x111111);
+
+                        //floor
+                        vLine(i.x + d, drawEnd, height, 0xAAAAAA);
+                    }
                 }
                 
                 break;
@@ -265,7 +267,7 @@ inline void SMRenderer::getInput(SDL_Event& event) {
     while (SDL_PollEvent(&event)) {
         switch(event.type) {
             case SDL_KEYDOWN: {
-                std::cout << "keydown" << std::endl;
+                //std::cout << "keydown" << std::endl;
                 switch (event.key.keysym.sym) {
                     case SDLK_w:
                         position.y -= speed * sin(angle);
@@ -335,8 +337,8 @@ inline void SMRenderer::getInput(SDL_Event& event) {
                         renderRunning = false;
                         break;
                 }
-                std::cout << "position: <" << position.x << ", " << position.y << ">" << std::endl
-                << "angle: " << angle << std::endl;
+                //std::cout << "position: <" << position.x << ", " << position.y << ">" << std::endl
+                //<< "angle: " << angle << std::endl;
                 return;
             }
             case SDL_MOUSEMOTION: {
@@ -374,8 +376,8 @@ inline void SMRenderer::getInput(SDL_Event& event) {
                     }
                 }
             }
-            std::cout << "position: <" << player.x << ", " << player.y << ">" << std::endl
-            << "angle: " << angle << std::endl;
+            //std::cout << "position: <" << player.x << ", " << player.y << ">" << std::endl
+            //<< "angle: " << angle << std::endl;
         }
     }
 }
