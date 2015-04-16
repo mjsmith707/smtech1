@@ -214,6 +214,7 @@ void SMRenderer::render() {
                     // wallseg
                     // trippy effect
                     //vLine(i.x, drawStart, drawEnd, i.line.color * (i.dist / 500)); 
+
                     for (int d = 0; d < raycaster.castGap; d++){
                         vLine(i.x + d, drawStart, drawEnd, dim(i.line.color, 200.0 * smoothstep(0.0, 500.0, i.dist)));
 
