@@ -33,22 +33,22 @@ std::vector<SMLine> MapLoader::loadMap(std::string& filename) {
                         temp += i;
                         continue;
                     }
-                    
-                    temp += i;
-                    color = (uint32_t)std::stoi(temp);
-                    
-                    SMVector vecta {vector[0],vector[1],0.0};
-                    SMVector vectb {vector[2],vector[3],0.0};
-                    SMLine lineseg {vecta, vectb, color};
-                    map.push_back(lineseg);
-                    
-                    temp = "";
-                    vector[0] = 0.0;
-                    vector[1] = 0.0;
-                    vector[2] = 0.0;
-                    vector[3] = 0.0;
-                    color = 0;
-                    count = 0;
+                    else {
+                        color = (uint32_t)std::stoi(temp);
+                        
+                        SMVector vecta {vector[0],vector[1],0.0};
+                        SMVector vectb {vector[2],vector[3],0.0};
+                        SMLine lineseg {vecta, vectb, color};
+                        map.push_back(lineseg);
+                        
+                        temp = "";
+                        vector[0] = 0.0;
+                        vector[1] = 0.0;
+                        vector[2] = 0.0;
+                        vector[3] = 0.0;
+                        color = 0;
+                        count = 0;
+                    }
                 }
                 else if (i == ',') {
                     vector[count] = std::stod(temp);
