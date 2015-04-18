@@ -27,39 +27,40 @@ Raycaster::Raycaster(uint32_t width, uint32_t height, uint32_t viewHeight, doubl
 
 std::vector<RaycastHit> Raycaster::castLines(SMVector& position, double angle, std::vector<SMLine>& lines) {
     std::vector<RaycastHit> projectedLines;
+    projectedLines.reserve((uint32_t)(width / castGap));
     // iterate through all the rays to cast
     // castgap defines the distance between raycasts
     for (int a = 0; a < width / castGap; a++){
+        // intersection point gets put in here, if any intersection happens
+        SMVector intersect;
+
+        // the ray to cast
+        // start casting from player's position outwards, so pt1 = {player.x, player.y}
+        // pt2.x: 
+        // transform player's x outwards based on current angle
+        //                        -0.5 -> 0.5
+        //                                       ratio of current position:total 
+        //                                       positions so, a % of progress
+        //                                                                                 trig stuff,
+        //                                                                                 * 2 earlier so 
+        //                                                                                 / 2 now
+        //                                                                                                 "ray", just sent really far basically
+        //                                                                                                 this multiplier doesn't really matter
+        //                                                                                                 since smline::intersect checking broken
+        // player.x + planeDist * (-1.0 + 2.0 * ((double)(a * castGap) / (double)width)) * sin(fov / 2.0) * 100.0
+        //
+        // pt2.y is just simple extension of the ray
+        SMLine ray = { { player.x, player.y }, { player.x + planeDist * (-1.0 + 2.0 * ((double)(a * castGap) / (double)width)) * sin(fov / 2.0) * 100.0, player.y - planeDist * 100.0 }, 0xFFFF00 };
+
         // go through each line on the map (this is where BSP would come in)
         for (auto i : lines){
             // the line to intersect; project the line so it's relative to our orientation
             SMLine toIntersect = { project(i.pt1, angle, position), project(i.pt2, angle, position), i.color };
             
-            // intersection point gets put in here, if any intersection happens
-            SMVector intersect;
-
-            // the ray to cast
-            // start casting from player's position outwards, so pt1 = {player.x, player.y}
-            // pt2.x: 
-            // transform player's x outwards based on current angle
-            //                        -0.5 -> 0.5
-            //                                       ratio of current position:total 
-            //                                       positions so, a % of progress
-            //                                                                                 trig stuff,
-            //                                                                                 * 2 earlier so 
-            //                                                                                 / 2 now
-            //                                                                                                 "ray", just sent really far basically
-            //                                                                                                 this multiplier doesn't really matter
-            //                                                                                                 since smline::intersect checking broken
-            // player.x + planeDist * (-1.0 + 2.0 * ((double)(a * castGap) / (double)width)) * sin(fov / 2.0) * 100.0
-            //
-            // pt2.y is just simple extension of the ray
-            SMLine ray = { { player.x, player.y }, { player.x + planeDist * (-1.0 + 2.0 * ((double)(a * castGap) / (double)width)) * sin(fov / 2.0) * 100.0, player.y - planeDist * 100.0 }, 0xFFFF00 };
-
             // if there was an intersection
             if (toIntersect.intersect(ray, intersect)){
                 SMVector vec = intersect;
-                // don't count itersections behind the player
+                // don't count intersections behind the player
                 if (vec.y < player.y - planeDist){
 
                     // the line we actually intersected
