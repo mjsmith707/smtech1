@@ -111,7 +111,7 @@ void SMRenderer::threadinit() {
 // Loads meshes into SMMesh objects for rendering
 // Will be replaced with a file format and more concrete Mesh structure
 void SMRenderer::initMeshes() {
-    std::string filename = "dm1.txt";
+    std::string filename = "stress.txt";
     MapLoader maploader;
     lines = maploader.loadMap(filename);
 }
@@ -196,11 +196,26 @@ void SMRenderer::render() {
             case DOOMCASTER: {
                 std::vector<RaycastHit> intersections = raycaster.castLines(position, angle, lines);
                 minimap.intersections = intersections;
+                uint32_t drawn = 0;
+                uint32_t skipped = 0;
+                uint32_t lastDrawnX = -1;
+                uint32_t size = intersections.size();
                 
                 while (!intersections.empty()) {
                     RaycastHit i = intersections.front();
                     std::pop_heap(intersections.begin(), intersections.end());
                     intersections.pop_back();
+
+                    if (i.x == lastDrawnX){
+                        skipped++;
+                        continue;
+                    }
+                    else {
+                        lastDrawnX = i.x;
+                    }
+
+                    drawn++;
+
                     double lineh = std::abs(((double)height / (double)i.dist));
                     lineh *= 50.0;
 
@@ -225,7 +240,7 @@ void SMRenderer::render() {
                         vLine(i.x + d, drawEnd, height, 0xAAAAAA);
                     }
                 }
-                
+                //std::cout << drawn << " " << skipped << " " << size << std::endl;
                 break;
             }
             case TRASHCASTER: {
