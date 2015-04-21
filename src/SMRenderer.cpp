@@ -236,51 +236,9 @@ void SMRenderer::render() {
                     uint32_t currPx = i.x % sprites[2].getWidth();
 
                     for (int d = 0; d < raycaster.castGap; d++){
-                        
-                        // monocolored walls
-                        // vLine(i.x + d, drawStart, drawEnd, dim(i.line.color, 200.0 * smoothstep(0.0, 500.0, i.dist)));
-                        
-                        // ghetto texture mapping
-                        
-                        for (uint32_t wy = 0; wy < sprites[2].getHeight(); wy++){
-                            RGBApixel bmppixel = sprites[2].staticView()->GetPixel(currPx, wy % sprites[2].getHeight());
-                            numDrawn++;
-                            if (numDrawn > pxWidth){
-                                numDrawn = 0;
-                                currPx = i.x  % sprites[2].getWidth();
-                            }
-                            // grabbed from drawbmp below
-                            uint32_t pixel = ((unsigned char)bmppixel.Alpha << 24);
-                            pixel += ((unsigned char)bmppixel.Red << 16);
-                            pixel += ((unsigned char)bmppixel.Green << 8);
-                            pixel += ((unsigned char)bmppixel.Blue);
-
-                            // optimize dim for per-vline dim factor, I have a feeling that's what the compiler was doing anyways
-                            //drawPixel(i.x + d, drawStart + wy, dim(pixel, 200.0 * smoothstep(0.0, 500.0, i.dist)));
-                           
-                            // this is an awful amount of branching and range checking, need to fix
-                            uint32_t tempo = (drawStart + wy * (lineh / sprites[2].getHeight()));
-                            if (tempo < 1) tempo = 2;
-                            if (tempo >= player.y * 2) tempo = player.y * 2 - 2;
-                            if (tempo >= (player.y * 2)){
-                                std::cout << tempo << std::endl;
-                            }
-                            if (tempo <= 2){
-                                std::cout << tempo << std::endl;
-                            }
-                            if (lineh > 1.0){
-                                for (int hd = 0; hd < (uint32_t)lineh; hd++){
-                                    int thd = tempo + hd;
-                                    if (thd < 1) thd = 2;
-                                    if (thd >= player.y * 2) thd = player.y * 2 - 2;
-                                    drawPixel(i.x + d, thd, pixel);
-                                }
-                            }
-                            else {
-                                drawPixel(i.x + d, tempo, pixel);
-                            }
-                        }
-                              
+                        // monocolored, shaded walls
+                        //vLine(i.x + d, drawStart, drawEnd, dim(i.line.color, 200.0 * smoothstep(0.0, 500.0, i.dist)));
+                        texVLine(i.x + d, drawStart, drawEnd, i.dist, sprites[2].getWidth(), sprites[2].getHeight(), sprites[2].staticView());
                         // roof
                         vLine(i.x + d, 0, drawStart, 0x111111);
 
@@ -454,6 +412,40 @@ inline void SMRenderer::drawBlank() {
         }
     }
 }
+
+// Textured vline
+inline void SMRenderer::texVLine(int x1, int y1, int y2, int dist, int w, int h, BMP* texture) {
+#if defined(__SNAIL__)
+    drawLine(x1, y1, x1, y2, color);
+#else
+    int wallh = y2 - y1;
+
+    for (int i = 0; i < wallh; i++){
+        // do something about these casts
+        RGBApixel pix = texture->GetPixel(x1 % w, (int)(((double)i / (double)wallh) * h));
+
+        // consolidate into oneliner
+        uint32_t pxc = (unsigned char)pix.Alpha << 24;
+        pxc += (unsigned char)pix.Red << 16;
+        pxc += (unsigned char)pix.Green << 8;
+        pxc += (unsigned char)pix.Blue;
+        
+        drawPixel(x1, y1 + i, pxc);
+    }
+
+    /*
+    for (int i = 0; i < h; i++){
+        RGBApixel pix = texture->GetPixel(x1 % w, i);
+        uint32_t pxc = (unsigned char)pix.Alpha << 24;
+        pxc += (unsigned char)pix.Red << 16;
+        pxc += (unsigned char)pix.Green << 8;
+        pxc += (unsigned char)pix.Blue;
+        drawPixel(x1, y1 + i, pxc);
+    }
+    */
+#endif
+}
+
 
 // Vertical Line
 inline void SMRenderer::vLine(int x1, int y1, int y2, uint32_t color) {

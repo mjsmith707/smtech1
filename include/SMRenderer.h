@@ -91,6 +91,7 @@ namespace smtech1 {
             inline void drawLine(int x1, int y1, int x2, int y2, uint32_t color);
             inline void drawLine(SMLine line);
             inline void vLine(int x, int y1, int y2, uint32_t  color);
+            inline void texVLine(int x, int y1, int y2, int dist, int w, int h, BMP* texture);
             inline void drawHud();
             inline void drawMap();
             inline void drawSprites();
