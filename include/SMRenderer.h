@@ -71,6 +71,9 @@ namespace smtech1 {
             // Sprites to render
             std::vector<Sprite> sprites;
 
+            // Texture mapping textures
+            SDL_Texture* wallTexture;
+
             // Minimap
             Minimap minimap;
             bool mapactive;

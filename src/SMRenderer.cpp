@@ -74,6 +74,7 @@ void SMRenderer::threadinit() {
         
         SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 0x0, 0x0, 0x0));
         SDL_UpdateWindowSurface(window);
+       
     }
 
     // Grab Mouse
@@ -99,7 +100,7 @@ void SMRenderer::threadinit() {
     // raycaster
     //1.047197551196597746154 /* 60deg in rad */
     //1.57079632679489661923132 /* 90deg in rad */
-    raycaster = Raycaster(width, height, 32, 1.047197551196597746154 /* 60deg in rad */, 64, player, 4);
+    raycaster = Raycaster(width, height, 32, 1.047197551196597746154 /* 60deg in rad */, 64, player, 1);
 
     // Enter render loop
     render();
@@ -111,7 +112,7 @@ void SMRenderer::threadinit() {
 // Loads meshes into SMMesh objects for rendering
 // Will be replaced with a file format and more concrete Mesh structure
 void SMRenderer::initMeshes() {
-    std::string filename = "stress.txt";
+    std::string filename = "room.txt";
     MapLoader maploader;
     lines = maploader.loadMap(filename);
 }
@@ -147,6 +148,10 @@ void SMRenderer::initSprites() {
     std::vector<std::string> doomguyfiles {dg1,dg2,dg3,dg4,dg5};
     Sprite doomguy { doomguyfiles, 75, (width/2)-30, height-40, true };
     sprites.push_back(doomguy);
+
+    std::vector<std::string> wallFile{"dankwall.bmp"};
+    Sprite wall{wallFile, 0, 0, 0, false};
+    sprites.push_back(wall);
 }
 
 // Main render thread loop function
@@ -217,22 +222,65 @@ void SMRenderer::render() {
                     drawn++;
 
                     double lineh = std::abs(((double)height / (double)i.dist));
-                    lineh *= 50.0;
-
+                    //std::cout << lineh << std::endl;
+                    lineh *= sprites[2].getHeight();
+                    
                     double drawStart = -lineh / 2.0 + (double)height / 2.0;
-                    double drawEnd = lineh / 2.0 + (double)height / 2.0;
+                    double drawEnd = lineh / 2.0 + (double)height / 2.0;                    
 
                     if (drawStart < 0) drawStart = 0;
                     if (drawEnd >= height) drawEnd = height-1;
 
-
-                    // wallseg
-                    // trippy effect
-                    //vLine(i.x, drawStart, drawEnd, i.line.color * (i.dist / 500)); 
+                    uint32_t pxWidth = lineh / sprites[2].getHeight();
+                    uint32_t numDrawn = 0;
+                    uint32_t currPx = i.x % sprites[2].getWidth();
 
                     for (int d = 0; d < raycaster.castGap; d++){
-                        vLine(i.x + d, drawStart, drawEnd, dim(i.line.color, 200.0 * smoothstep(0.0, 500.0, i.dist)));
+                        
+                        // monocolored walls
+                        // vLine(i.x + d, drawStart, drawEnd, dim(i.line.color, 200.0 * smoothstep(0.0, 500.0, i.dist)));
+                        
+                        // ghetto texture mapping
+                        
+                        for (uint32_t wy = 0; wy < sprites[2].getHeight(); wy++){
+                            RGBApixel bmppixel = sprites[2].staticView()->GetPixel(currPx, wy % sprites[2].getHeight());
+                            numDrawn++;
+                            if (numDrawn > pxWidth){
+                                numDrawn = 0;
+                                currPx = i.x  % sprites[2].getWidth();
+                            }
+                            // grabbed from drawbmp below
+                            uint32_t pixel = ((unsigned char)bmppixel.Alpha << 24);
+                            pixel += ((unsigned char)bmppixel.Red << 16);
+                            pixel += ((unsigned char)bmppixel.Green << 8);
+                            pixel += ((unsigned char)bmppixel.Blue);
 
+                            // optimize dim for per-vline dim factor, I have a feeling that's what the compiler was doing anyways
+                            //drawPixel(i.x + d, drawStart + wy, dim(pixel, 200.0 * smoothstep(0.0, 500.0, i.dist)));
+                           
+                            // this is an awful amount of branching and range checking, need to fix
+                            uint32_t tempo = (drawStart + wy * (lineh / sprites[2].getHeight()));
+                            if (tempo < 1) tempo = 2;
+                            if (tempo >= player.y * 2) tempo = player.y * 2 - 2;
+                            if (tempo >= (player.y * 2)){
+                                std::cout << tempo << std::endl;
+                            }
+                            if (tempo <= 2){
+                                std::cout << tempo << std::endl;
+                            }
+                            if (lineh > 1.0){
+                                for (int hd = 0; hd < (uint32_t)lineh; hd++){
+                                    int thd = tempo + hd;
+                                    if (thd < 1) thd = 2;
+                                    if (thd >= player.y * 2) thd = player.y * 2 - 2;
+                                    drawPixel(i.x + d, thd, pixel);
+                                }
+                            }
+                            else {
+                                drawPixel(i.x + d, tempo, pixel);
+                            }
+                        }
+                              
                         // roof
                         vLine(i.x + d, 0, drawStart, 0x111111);
 
