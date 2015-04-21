@@ -236,7 +236,9 @@ void SMRenderer::render() {
                     uint32_t currPx = i.x % sprites[2].getWidth();
 
                     // for texture mapping
-                    double fract = i.line.pt1.dist(i.vec) / (i.line.pt1.dist(i.line.pt2));
+                    double len = (i.line.pt1.dist(i.line.pt2));
+                    double fract = i.line.pt1.dist(i.vec) / len;
+                     
                     // this works, but it loses a lot of accuracy along the edges
                     //double fract = i.line.pt1.fastDist(i.vec) / (i.line.pt1.fastDist(i.line.pt2));
     
@@ -251,7 +253,7 @@ void SMRenderer::render() {
                         
                         // textured walls
                         //TODO fix shading factor
-                        texVLine(i.x + d, drawStart, drawEnd, i.dist, fract, ssconst, sprites[2].getWidth(), sprites[2].getHeight(), sprites[2].staticView());
+                        texVLine(i.x + d, drawStart, drawEnd, i.dist, fract, len, ssconst, sprites[2].getWidth(), sprites[2].getHeight(), sprites[2].staticView());
                         
                         // roof
                         vLine(i.x + d, 0, drawStart, 0x111111);
@@ -428,7 +430,7 @@ inline void SMRenderer::drawBlank() {
 }
 
 // Textured vline
-inline void SMRenderer::texVLine(int x1, int y1, int y2, int dist, double fract, double ssconst, int w, int h, BMP* texture) {
+inline void SMRenderer::texVLine(int x1, int y1, int y2, int dist, double fract, double len, double ssconst, int w, int h, BMP* texture) {
 #if defined(__SNAIL__)
     drawLine(x1, y1, x1, y2, color);
 #else
@@ -438,7 +440,7 @@ inline void SMRenderer::texVLine(int x1, int y1, int y2, int dist, double fract,
         // do something about these casts
         
         // TODO tiling check, vs constant texture
-        RGBApixel pix = texture->GetPixel((uint32_t)(fract * w), (int)(((double)i / (double)wallh) * h));
+        RGBApixel pix = texture->GetPixel((uint32_t)((uint32_t)(fract * len) % w), (int)(((double)i / (double)wallh) * h));
 
         // consolidate into oneliner
         uint32_t pxc = (unsigned char)pix.Alpha << 24;
