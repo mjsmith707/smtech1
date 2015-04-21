@@ -422,7 +422,7 @@ inline void SMRenderer::texVLine(int x1, int y1, int y2, int dist, int w, int h,
 
     for (int i = 0; i < wallh; i++){
         // do something about these casts
-        RGBApixel pix = texture->GetPixel(x1 % w, (int)(((double)i / (double)wallh) * h));
+        RGBApixel pix = texture->GetPixel(((x1 * w) / dist) % w, (int)(((double)i / (double)wallh) * h));
 
         // consolidate into oneliner
         uint32_t pxc = (unsigned char)pix.Alpha << 24;
