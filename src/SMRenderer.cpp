@@ -112,7 +112,7 @@ void SMRenderer::threadinit() {
 // Loads meshes into SMMesh objects for rendering
 // Will be replaced with a file format and more concrete Mesh structure
 void SMRenderer::initMeshes() {
-    std::string filename = "room.txt";
+    std::string filename = "test.txt";
     MapLoader maploader;
     lines = maploader.loadMap(filename);
 }
@@ -136,7 +136,7 @@ void SMRenderer::initSprites() {
     std::string sg3 = "SHTGC0.bmp";
     std::string sg4 = "SHTGD0.bmp";
     std::vector<std::string> sgfiles {sg1,sg2,sg3,sg4};
-    Sprite shotgun { sgfiles, 10, (width/2)-40, height-100, false};
+    Sprite shotgun { sgfiles, 10, (width/2)-40, height-100, false, false};
     sprites.push_back(shotgun);
     
     // Doomguy
@@ -146,11 +146,11 @@ void SMRenderer::initSprites() {
     std::string dg4 = "STFTL30.bmp";
     std::string dg5 = "STFTR30.bmp";
     std::vector<std::string> doomguyfiles {dg1,dg2,dg3,dg4,dg5};
-    Sprite doomguy { doomguyfiles, 75, (width/2)-30, height-40, true };
+    Sprite doomguy { doomguyfiles, 75, (width/2)-30, height-40, false, true };
     sprites.push_back(doomguy);
 
     std::vector<std::string> wallFile{"dankwall.bmp"};
-    Sprite wall{wallFile, 0, 0, 0, false};
+    Sprite wall{wallFile, 0, 0, 0, true, false};
     sprites.push_back(wall);
 }
 
@@ -235,15 +235,29 @@ void SMRenderer::render() {
                     uint32_t numDrawn = 0;
                     uint32_t currPx = i.x % sprites[2].getWidth();
 
+                    // for texture mapping
+                    double fract = i.line.pt1.dist(i.vec) / (i.line.pt1.dist(i.line.pt2));
+                    // this works, but it loses a lot of accuracy along the edges
+                    //double fract = i.line.pt1.fastDist(i.vec) / (i.line.pt1.fastDist(i.line.pt2));
+    
+                    // smoothstep constant to dim by
+                    // pretty arbitrary, have to play around with the values a lot to get things that look good
+                    // especially depending on the current texture darkness
+                    double ssconst = 200.0 * smoothstep(150.0, 800.0, i.dist);
+
                     for (int d = 0; d < raycaster.castGap; d++){
                         // monocolored, shaded walls
                         //vLine(i.x + d, drawStart, drawEnd, dim(i.line.color, 200.0 * smoothstep(0.0, 500.0, i.dist)));
-                        texVLine(i.x + d, drawStart, drawEnd, i.dist, sprites[2].getWidth(), sprites[2].getHeight(), sprites[2].staticView());
+                        
+                        // textured walls
+                        //TODO fix shading factor
+                        texVLine(i.x + d, drawStart, drawEnd, i.dist, fract, ssconst, sprites[2].getWidth(), sprites[2].getHeight(), sprites[2].staticView());
+                        
                         // roof
                         vLine(i.x + d, 0, drawStart, 0x111111);
 
                         //floor
-                        vLine(i.x + d, drawEnd, height, 0xAAAAAA);
+                        vLine(i.x + d, drawEnd, height, 0x020202);
                     }
                 }
                 //std::cout << drawn << " " << skipped << " " << size << std::endl;
@@ -312,7 +326,7 @@ inline void SMRenderer::getInput(SDL_Event& event) {
 							angle = pi2;
 						}
 						else if (angle >= pi2) {
-							angle = 0;
+							angle = 0.01;
 						}
 						angle -= 0.01;
 						break;
@@ -321,7 +335,7 @@ inline void SMRenderer::getInput(SDL_Event& event) {
 							angle = pi2;
 						}
 						else if (angle >= pi2) {
-							angle = 0;
+							angle = 0.01;
 						}
 						angle += 0.01;
 						break;
@@ -373,7 +387,7 @@ inline void SMRenderer::getInput(SDL_Event& event) {
                         angle = pi2;
                     }
                     else if (angle >= pi2) {
-                        angle = 0;
+                        angle = 0.01;
                     }
                     angle -= 0.04;
                 }
@@ -382,7 +396,7 @@ inline void SMRenderer::getInput(SDL_Event& event) {
                         angle = pi2;
                     }
                     else if (angle >= pi2) {
-                        angle = 0;
+                        angle = 0.01;
                     }
                     angle += 0.04;
                 }
@@ -414,7 +428,7 @@ inline void SMRenderer::drawBlank() {
 }
 
 // Textured vline
-inline void SMRenderer::texVLine(int x1, int y1, int y2, int dist, int w, int h, BMP* texture) {
+inline void SMRenderer::texVLine(int x1, int y1, int y2, int dist, double fract, double ssconst, int w, int h, BMP* texture) {
 #if defined(__SNAIL__)
     drawLine(x1, y1, x1, y2, color);
 #else
@@ -422,27 +436,20 @@ inline void SMRenderer::texVLine(int x1, int y1, int y2, int dist, int w, int h,
 
     for (int i = 0; i < wallh; i++){
         // do something about these casts
-        RGBApixel pix = texture->GetPixel(((x1 * w) / dist) % w, (int)(((double)i / (double)wallh) * h));
+        
+        // TODO tiling check, vs constant texture
+        RGBApixel pix = texture->GetPixel((uint32_t)(fract * w), (int)(((double)i / (double)wallh) * h));
 
         // consolidate into oneliner
         uint32_t pxc = (unsigned char)pix.Alpha << 24;
-        pxc += (unsigned char)pix.Red << 16;
-        pxc += (unsigned char)pix.Green << 8;
-        pxc += (unsigned char)pix.Blue;
+        pxc += ((unsigned char)pix.Red << 16);
+        pxc += ((unsigned char)pix.Green << 8);
+        pxc += ((unsigned char)pix.Blue);
         
-        drawPixel(x1, y1 + i, pxc);
-    }
+        pxc = dim(pxc, ssconst);
 
-    /*
-    for (int i = 0; i < h; i++){
-        RGBApixel pix = texture->GetPixel(x1 % w, i);
-        uint32_t pxc = (unsigned char)pix.Alpha << 24;
-        pxc += (unsigned char)pix.Red << 16;
-        pxc += (unsigned char)pix.Green << 8;
-        pxc += (unsigned char)pix.Blue;
         drawPixel(x1, y1 + i, pxc);
     }
-    */
 #endif
 }
 
@@ -545,21 +552,23 @@ inline void SMRenderer::drawHud() {
 
 inline void SMRenderer::drawSprites() {
     for (auto& i : sprites) {
-        if (i.isPlaying()) {
-            uint32_t bmpwidth = i.getWidth();
-            uint32_t bmpheight = i.getHeight();
-            // some kind of entity class for xrel/yrel
-            
-            BMP* bmp = i.cycleAnimation();
-            
-            drawBMP(bmpwidth, bmpheight, i.xrel, i.yrel, bmp);
-        }
-        else if (i.isStatic()) {
-            uint32_t bmpwidth = i.getWidth();
-            uint32_t bmpheight = i.getHeight();
-            
-            BMP* bmp = i.staticView();
-            drawBMP(bmpwidth, bmpheight, i.xrel, i.yrel, bmp);
+        if (!i.isTexture()){
+            if (i.isPlaying()) {
+                uint32_t bmpwidth = i.getWidth();
+                uint32_t bmpheight = i.getHeight();
+                // some kind of entity class for xrel/yrel
+
+                BMP* bmp = i.cycleAnimation();
+
+                drawBMP(bmpwidth, bmpheight, i.xrel, i.yrel, bmp);
+            }
+            else if (i.isStatic()) {
+                uint32_t bmpwidth = i.getWidth();
+                uint32_t bmpheight = i.getHeight();
+
+                BMP* bmp = i.staticView();
+                drawBMP(bmpwidth, bmpheight, i.xrel, i.yrel, bmp);
+            }
         }
     }
 }
@@ -729,4 +738,23 @@ inline uint32_t SMRenderer::dim(uint32_t color, uint32_t amount){
     }
 
     return red << 16 | green << 8 | blue;
+}
+
+// For calculating collision normals later
+// http://en.wikipedia.org/wiki/Fast_inverse_square_root
+float SMRenderer::Q_rsqrt(float number)
+{
+    long i;
+    float x2, y;
+    const float threehalfs = 1.5F;
+
+    x2 = number * 0.5F;
+    y = number;
+    i = *(long *)&y;                       // evil floating point bit level hacking
+    i = 0x5f3759df - (i >> 1);               // what the fuck? 
+    y = *(float *)&i;
+    y = y * (threehalfs - (x2 * y * y));   // 1st iteration
+    //      y  = y * ( threehalfs - ( x2 * y * y ) );   // 2nd iteration, this can be removed
+
+    return y;
 }

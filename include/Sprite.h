@@ -25,13 +25,15 @@ namespace smtech1 {
         bool playing;
         bool staticview;
         bool loop;
+        bool texture;
     public:
         uint32_t xrel;
         uint32_t yrel;
-        Sprite(std::vector<std::string> filenames, uint32_t delay, uint32_t xrel, uint32_t yrel, bool loop);
+        Sprite(std::vector<std::string> filenames, uint32_t delay, uint32_t xrel, uint32_t yrel, bool texture, bool loop);
         void playAnimation();
         bool isPlaying();
         bool isStatic();
+        bool isTexture();
         uint32_t getWidth();
         uint32_t getHeight();
         BMP* cycleAnimation();

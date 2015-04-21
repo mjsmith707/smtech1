@@ -9,7 +9,7 @@
 #include "Sprite.h"
 using namespace smtech1;
 
-Sprite::Sprite(std::vector<std::string> filenames, uint32_t delay, uint32_t xrel, uint32_t yrel, bool loop) : playing(loop), staticview(true), cycle(0), delaycount(0), cycledelay(delay), xrel(xrel), yrel(yrel), loop(loop) {
+Sprite::Sprite(std::vector<std::string> filenames, uint32_t delay, uint32_t xrel, uint32_t yrel, bool isTexture, bool loop) : playing(loop), staticview(true), cycle(0), delaycount(0), cycledelay(delay), xrel(xrel), yrel(yrel), loop(loop) {
     for (auto i : filenames) {
         try {
             BMP* image = new BMP();
@@ -21,6 +21,8 @@ Sprite::Sprite(std::vector<std::string> filenames, uint32_t delay, uint32_t xrel
         }
     }
     
+    texture = isTexture;
+
     if (images.size() == 0) {
         throw std::runtime_error("Unable to load any sprite files");
     }
@@ -32,6 +34,10 @@ void Sprite::playAnimation() {
     staticview = false;
     cycle = 0;
     delaycount = 0;
+}
+
+bool Sprite::isTexture(){
+    return texture;
 }
 
 bool Sprite::isPlaying() {

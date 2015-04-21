@@ -91,7 +91,7 @@ namespace smtech1 {
             inline void drawLine(int x1, int y1, int x2, int y2, uint32_t color);
             inline void drawLine(SMLine line);
             inline void vLine(int x, int y1, int y2, uint32_t  color);
-            inline void texVLine(int x, int y1, int y2, int dist, int w, int h, BMP* texture);
+            inline void texVLine(int x, int y1, int y2, int dist, double fract, double ssconst, int w, int h, BMP* texture);
             inline void drawHud();
             inline void drawMap();
             inline void drawSprites();
@@ -120,6 +120,8 @@ namespace smtech1 {
             // graphics things
             inline double smoothstep(double min, double max, double val);
             inline uint32_t dim(uint32_t color, uint32_t amount);
+            // what the fuck?
+            float Q_rsqrt(float number);
 
         public:
             SMRenderer(uint32_t width, uint32_t height);
