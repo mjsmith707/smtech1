@@ -120,6 +120,7 @@ namespace smtech1 {
             // graphics things
             inline double smoothstep(double min, double max, double val);
             inline uint32_t dim(uint32_t color, uint32_t amount);
+            inline uint32_t brighten(uint32_t color, uint32_t amount);
             // what the fuck?
             float Q_rsqrt(float number);
 

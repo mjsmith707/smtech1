@@ -48,9 +48,7 @@ namespace smtech1 {
             
             SMVector player;
             
-            // Do some fancy vector math
-            SMVector project(const SMVector& vecta, const double angle, const SMVector& position);
-                
+            
         public:
             Raycaster();
             Raycaster(uint32_t width, uint32_t height, uint32_t viewHeight, double fov, uint32_t wallsz, SMVector& player, uint32_t gap);
@@ -66,6 +64,9 @@ namespace smtech1 {
             // more bad more good
             uint32_t castGap;
             double planeDist;
+
+            // Do some fancy vector math
+            SMVector project(const SMVector& vecta, const double angle, const SMVector& position);
     };
 
     

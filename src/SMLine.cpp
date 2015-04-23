@@ -49,3 +49,7 @@ bool SMLine::intersect(SMLine& other, SMVector& intersect){
     }
     return true;
 }
+
+SMVector SMLine::mid(){
+    return SMVector{(pt1.x + pt2.x) / 2.0, (pt1.y + pt2.y) / 2.0, 0.0};
+}

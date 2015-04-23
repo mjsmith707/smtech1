@@ -19,7 +19,7 @@ namespace smtech1 {
             SMVector pt2;
             uint32_t color;
             bool intersect(SMLine& other, SMVector& intersect);
-        
+            SMVector mid();
     } SMLine;
 }
 

@@ -152,6 +152,14 @@ void SMRenderer::initSprites() {
     std::vector<std::string> wallFile{"dankwall.bmp"};
     Sprite wall{wallFile, 0, 0, 0, true, false};
     sprites.push_back(wall);
+
+    std::vector<std::string> floorFile{ "floor.bmp" };
+    Sprite floor{ floorFile, 0, 0, 0, true, false };
+    sprites.push_back(floor);
+
+    std::vector<std::string> roofFile{ "roof.bmp" };
+    Sprite roof{ roofFile, 0, 0, 0, true, false };
+    sprites.push_back(roof);
 }
 
 // Main render thread loop function
@@ -205,7 +213,8 @@ void SMRenderer::render() {
                 uint32_t skipped = 0;
                 uint32_t lastDrawnX = -1;
                 uint32_t size = intersections.size();
-                
+                //std::cout << position.x << " " << position.y << std::endl;
+
                 while (!intersections.empty()) {
                     RaycastHit i = intersections.front();
                     std::pop_heap(intersections.begin(), intersections.end());
@@ -245,24 +254,84 @@ void SMRenderer::render() {
                     // smoothstep constant to dim by
                     // pretty arbitrary, have to play around with the values a lot to get things that look good
                     // especially depending on the current texture darkness
-                    double ssconst = 200.0 * smoothstep(150.0, 800.0, i.dist);
+                    double ssconst = 500.0 * smoothstep(300.0, 800.0, i.dist);
 
                     for (int d = 0; d < raycaster.castGap; d++){
                         // monocolored, shaded walls
                         //vLine(i.x + d, drawStart, drawEnd, dim(i.line.color, 200.0 * smoothstep(0.0, 500.0, i.dist)));
-                        
-                        // textured walls
-                        //TODO fix shading factor
-                        texVLine(i.x + d, drawStart, drawEnd, i.dist, fract, len, ssconst, sprites[2].getWidth(), sprites[2].getHeight(), sprites[2].staticView());
-                        
-                        // roof
-                        vLine(i.x + d, 0, drawStart, 0x111111);
 
-                        //floor
-                        vLine(i.x + d, drawEnd, height, 0x020202);
+                        // textured walls
+                        // TODO fix shading factor
+                        texVLine(i.x + d, drawStart, drawEnd, i.dist, fract, len, ssconst, sprites[2].getWidth(), sprites[2].getHeight(), sprites[2].staticView());
+
+                        // monocolor roof
+                        //vLine(i.x + d, 0, drawStart, 0x111111);
+
+                        // monocolor floor
+                        //vLine(i.x + d, drawEnd, height, 0x020202);
+
+                        // plane casting for ceil&floor
+                        double planeXWall, planeYWall; 
+
+                        // 'unproject' so we're casting against the actual 'map axes' and not relative 
+                        // to the player's position, which stays constant all th e time
+                        SMVector transv = raycaster.project(SMVector{i.vec.x, i.vec.y, 0}, -angle, player);
+
+                        planeXWall = transv.x;
+                        planeYWall = transv.y;
+
+                        double distWall, currentDist;
+
+                        distWall = i.dist;
+                        double h = player.y * 2.0;
+
+                        // practically, texture width and height will be a constant throughout the engine so 
+                        // these should also be engine-level constants
+                        int texWidth = sprites[3].getWidth();
+                        int texHeight = sprites[3].getHeight();
+
+                        //draw the floor from drawEnd to the bottom of the screen
+                        for (int y = drawEnd + 1; y < h; y++)
+                        {
+                            currentDist = h / (2.0 * y - h);
+                            double weight = currentDist / distWall;
+
+                            // player's position is always (player.x, player.y), aka (width/2, height/2) since the
+                            // world is transformed and moved around the player instead of the other way around
+                            double currentFloorX = weight * planeXWall + (1.0 - weight) * player.x;
+                            double currentFloorY = weight * planeYWall + (1.0 - weight) * player.y;
+
+                            int floorTexX, floorTexY;
+                            floorTexX = int(currentFloorX * texWidth - position.x) % texWidth;
+                            floorTexY = int(currentFloorY * texHeight - position.y) % texHeight;
+
+                            // from here, draw the pixels
+                            RGBApixel pix = sprites[3].staticView()->GetPixel(floorTexX, floorTexY);
+
+                            // TODO sprite.pixel(x, y) returns uint32_t with all of these transforms applied
+                            uint32_t pxcfloor = (unsigned char)pix.Alpha << 24;
+                            pxcfloor += ((unsigned char)pix.Red << 16);
+                            pxcfloor += ((unsigned char)pix.Green << 8);
+                            pxcfloor += ((unsigned char)pix.Blue);
+
+                            pix = sprites[4].staticView()->GetPixel(floorTexX, floorTexY);
+                            uint32_t pxcroof = (unsigned char)pix.Alpha << 24;
+                            pxcroof += ((unsigned char)pix.Red << 16);
+                            pxcroof += ((unsigned char)pix.Green << 8);
+                            pxcroof += ((unsigned char)pix.Blue);
+
+                            // magic numbers
+                            // TODO optimize, works for now though
+                            uint32_t dimfact = 500.0 * (smoothstep(0.0, 12.0, currentDist));
+                            pxcfloor = dim(pxcfloor, dimfact);
+                            pxcroof = dim(pxcroof, dimfact);
+
+                            drawPixel(i.x + d, y, pxcfloor);
+                            drawPixel(i.x + d, h - y, pxcroof);
+                        }
                     }
+                       
                 }
-                //std::cout << drawn << " " << skipped << " " << size << std::endl;
                 break;
             }
             case TRASHCASTER: {
@@ -429,7 +498,7 @@ inline void SMRenderer::drawBlank() {
     }
 }
 
-// Textured vline
+// Textured wall vline
 inline void SMRenderer::texVLine(int x1, int y1, int y2, int dist, double fract, double len, double ssconst, int w, int h, BMP* texture) {
 #if defined(__SNAIL__)
     drawLine(x1, y1, x1, y2, color);
@@ -438,7 +507,7 @@ inline void SMRenderer::texVLine(int x1, int y1, int y2, int dist, double fract,
 
     for (int i = 0; i < wallh; i++){
         // do something about these casts
-        
+
         // TODO tiling check, vs constant texture
         RGBApixel pix = texture->GetPixel((uint32_t)((uint32_t)(fract * len) % w), (int)(((double)i / (double)wallh) * h));
 
@@ -447,7 +516,7 @@ inline void SMRenderer::texVLine(int x1, int y1, int y2, int dist, double fract,
         pxc += ((unsigned char)pix.Red << 16);
         pxc += ((unsigned char)pix.Green << 8);
         pxc += ((unsigned char)pix.Blue);
-        
+
         pxc = dim(pxc, ssconst);
 
         drawPixel(x1, y1 + i, pxc);
@@ -738,6 +807,22 @@ inline uint32_t SMRenderer::dim(uint32_t color, uint32_t amount){
     else {
         blue -= amount;
     }
+
+    return red << 16 | green << 8 | blue;
+}
+
+inline uint32_t SMRenderer::brighten(uint32_t color, uint32_t amount){
+    uint32_t red = (color & 0xff0000) >> 16;
+    uint32_t green = (color & 0x00ff00) >> 8;
+    uint32_t blue = color & 0x0000ff;
+
+    red += amount;
+    green += amount;
+    blue += amount;
+
+    red = red & 0x0000ff;
+    green = green & 0x0000ff;
+    blue = blue & 0x0000ff;
 
     return red << 16 | green << 8 | blue;
 }
