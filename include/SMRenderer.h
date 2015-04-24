@@ -49,8 +49,8 @@ namespace smtech1 {
             const uint32_t height;
 
             // texture w/h
-            const uint32_t texHeight = 312;
-            const uint32_t texWidth = 312;
+            const uint32_t texHeight = 128;
+            const uint32_t texWidth = 128;
 
             // player screen position, misnomer... always in the middle of the screen!
             SMVector playerPos;
@@ -85,6 +85,7 @@ namespace smtech1 {
 
         public:
             SMRenderer(uint32_t width, uint32_t height);
+            void init(SDL_Window* window, SDL_Surface* screen, SDL_Renderer* renderer);
             ~SMRenderer();
             // REFACTORTODO move most of these args into fields
             void render(std::vector<RaycastHit> intersections, uint32_t castgap, double angle, SMVector position, Raycaster raycaster, Texture* ceiling, Texture* floor);

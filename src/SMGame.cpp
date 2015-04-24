@@ -63,15 +63,15 @@ void SMGame::threadinit() {
 
         SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 0x0, 0x0, 0x0));
         SDL_UpdateWindowSurface(window);
-
     }
 
     // Grab Mouse
     mousemode = SDL_SetRelativeMouseMode(SDL_TRUE) == 0 ? true : false;
 
-    // Create some render data
+    // load all the assets based on the map's requirements
+    // static function maybe?
     AssetLoader loader;
-    loader.loadAssets("test.txt", spriteManager, map);
+    loader.loadAssets("loadertest.txt", spriteManager, map);
 
     // minimap init
     SMVector mapbl = { 10.0, 10.0, 0 };
@@ -81,13 +81,16 @@ void SMGame::threadinit() {
     mapfullscreen = false;
 
     // trashcaster
-    //it's broken so forget it
+    //it's broken so forget it  
     //trashcaster.loadMap(lines);
 
     // raycaster
     //1.047197551196597746154 /* 60deg in rad */
     //1.57079632679489661923132 /* 90deg in rad */
     raycaster = Raycaster(width, height, 32, 1.047197551196597746154 /* 60deg in rad */, 64, player, 1);
+
+    // initialize the renderer with SDL things
+    smRenderer.init(window, screen, renderer);
 
     // enter game loop
     game();
@@ -97,13 +100,133 @@ void SMGame::threadinit() {
 }
 
 void SMGame::game(){
-    // consistent FPS logic
+    while (renderRunning){
+        // T)DO consistent FPS logic
 
-    // process input
+        // process input
+        SDL_Event event;
+        getInput(event);
 
-    // do raycasting
-    std::vector<RaycastHit> intersections = raycaster.castLines(position, angle, map.lines);
+        // do raycasting
+        std::vector<RaycastHit> intersections = raycaster.castLines(position, angle, map.lines);
 
-    // render
-    smRenderer.render(intersections, raycaster.castGap, angle, position, raycaster, map.floor, map.ceiling);
+        // render results
+        smRenderer.render(intersections, raycaster.castGap, angle, position, raycaster, map.floor, map.ceiling);
+    }
+}
+
+inline void SMGame::getInput(SDL_Event& event) {
+    while (SDL_PollEvent(&event)) {
+        switch (event.type) {
+        case SDL_KEYDOWN: {
+            //std::cout << "keydown" << std::endl;
+            switch (event.key.keysym.sym) {
+            case SDLK_w:
+                position.y -= speed * sin(angle);
+                position.x -= speed * cos(angle);
+                break;
+            case SDLK_a:
+                position.y += speed * sin(angle + (pi / 2.0));
+                position.x += speed * cos(angle + (pi / 2.0));
+                break;
+            case SDLK_s:
+                position.y += speed * sin(angle);
+                position.x += speed * cos(angle);
+                break;
+            case SDLK_d:
+                position.y += speed * sin(angle - (pi / 2.0));
+                position.x += speed * cos(angle - (pi / 2.0));
+                break;
+            case SDLK_LEFT:
+                if (angle <= 0) {
+                    angle = pi2;
+                }
+                else if (angle >= pi2) {
+                    angle = 0.01;
+                }
+                angle -= 0.01;
+                break;
+            case SDLK_RIGHT:
+                if (angle <= 0) {
+                    angle = pi2;
+                }
+                else if (angle >= pi2) {
+                    angle = 0.01;
+                }
+                angle += 0.01;
+                break;
+            case SDLK_ESCAPE:
+                if (mousemode) {
+                    mousemode = SDL_SetRelativeMouseMode(SDL_FALSE) == 0 ? false : true;
+                }
+                else {
+                    mousemode = SDL_SetRelativeMouseMode(SDL_TRUE) == 0 ? true : false;
+                }
+                break;
+            case SDLK_TAB:
+                if (!mapactive) {
+                    mapactive = true;
+                    minimap.bl = SMVector{ 10.0, 10.0 };
+                    minimap.tr = SMVector{ 100.0, 100.0 };
+                }
+                else if (mapactive && !mapfullscreen) {
+                    mapfullscreen = true;
+                    minimap.bl = SMVector{ 0.0, 0.0 };
+                    minimap.tr = SMVector{ player.x * 2.0, player.y * 2.0 };
+                }
+                else if (mapactive && mapfullscreen) {
+                    mapactive = false;
+                    mapfullscreen = false;
+                }
+                break;
+            case SDLK_q:
+                renderRunning = false;
+                break;
+            }
+            //std::cout << "position: <" << position.x << ", " << position.y << ">" << std::endl
+            //<< "angle: " << angle << std::endl;
+            return;
+        }
+        case SDL_MOUSEMOTION: {
+            if (!mousemode) {
+                break;
+            }
+            // Clamping camera angle to 0<2pi with wraparound;
+            if (event.motion.xrel < 0) {
+                if (angle <= 0) {
+                    angle = pi2;
+                }
+                else if (angle >= pi2) {
+                    angle = 0.01;
+                }
+                angle -= 0.04;
+            }
+            else if (event.motion.xrel > 0) {
+                if (angle <= 0) {
+                    angle = pi2;
+                }
+                else if (angle >= pi2) {
+                    angle = 0.01;
+                }
+                angle += 0.04;
+            }
+        }
+        case SDL_MOUSEBUTTONDOWN: {
+            if (!mousemode) {
+                break;
+            }
+            else if (event.button.button == SDL_BUTTON_LEFT) {
+                // REFACTORTODO fix sprites
+                /*
+                // I didn't really think this part though yet
+                if (sprites.size() > 0) {
+                    sprites.at(0).playAnimation();
+                }
+                */
+            }
+        }
+                                  //std::cout << "position: <" << player.x << ", " << player.y << ">" << std::endl
+                                  //<< "angle: " << angle << std::endl;
+        }
+    }
 }

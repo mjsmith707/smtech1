@@ -21,6 +21,10 @@ namespace smtech1{
             SDL_Surface* screen;
             SDL_Renderer* renderer;
 
+            // Some useful pi constants;
+            const double pi = 3.14159265359;
+            const double pi2 = 6.28318530718;
+
             // input handler
             inline void getInput(SDL_Event& event);
 

@@ -66,6 +66,9 @@ std::vector<RaycastHit> Raycaster::castLines(SMVector& position, double angle, s
                     // the line we actually intersected
                     SMLine line = toIntersect;
                     
+                    // grab the texture pointer of the intersected line
+                    line.texture = i.texture;
+
                     // dist to intersection point (this doesn't suffer from the 'fisheye' effect because casting 
                     // happens from the plane (planeDist) instead of from player, basically have a 2d frustum
                     double dist = std::sqrt(std::pow((player.y - intersect.y), 2.0) + std::pow((player.x - intersect.x), 2.0));
