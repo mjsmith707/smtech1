@@ -23,7 +23,6 @@
 #include "EasyBMP_BMP.h"
 #include "EasyBMP_DataStructures.h"
 #include "Sprite.h"
-#include "MapLoader.h"
 
 namespace smtech1 {
     class SMRenderer {
@@ -84,9 +83,9 @@ namespace smtech1 {
             float Q_rsqrt(float number);
 
         public:
+            SMRenderer();
             SMRenderer(uint32_t width, uint32_t height);
             void init(SDL_Window* window, SDL_Surface* screen, SDL_Renderer* renderer);
-            ~SMRenderer();
             // REFACTORTODO move most of these args into fields
             void render(std::vector<RaycastHit> intersections, uint32_t castgap, double angle, SMVector position, Raycaster raycaster, Texture* ceiling, Texture* floor);
     };

@@ -10,6 +10,10 @@ SMRenderer::SMRenderer(uint32_t width, uint32_t height) : width(width), height(h
     playerPos = SMVector{ width / 2.0, height / 2.0, 0 };
 }
 
+SMRenderer::SMRenderer(): width(0), height(0){
+    std::cout << "Shouldn't be called" << std::endl;
+}
+
 // grab SDL things from the game
 void SMRenderer::init(SDL_Window* w, SDL_Surface* s, SDL_Renderer* r){
     window = w;

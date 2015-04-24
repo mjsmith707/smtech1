@@ -7,8 +7,8 @@ SMGame::SMGame(uint32_t width, uint32_t height) : renderThread(), renderRunning(
     player.x = static_cast<double>(width / 2);
     player.y = static_cast<double>(height / 2);
     player.z = 0.0;
-    position.x = static_cast<double>(width / 2);
-    position.y = static_cast<double>(height / 2);
+    position.x = 0.0;
+    position.y = 0.0;
     position.z = 0.0;
 }
 

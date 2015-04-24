@@ -3,7 +3,6 @@
 
 #include "SMRenderer.h"
 #include "AssetLoader.h"
-#include "MapLoader.h"
 #include "Map.h"
 
 namespace smtech1{
@@ -53,7 +52,6 @@ namespace smtech1{
             
             // loading things
             AssetLoader assetLoader;
-            MapLoader mapLoader;
             
             // sprite manager, for things that aren't textures
             SpriteManager spriteManager;
