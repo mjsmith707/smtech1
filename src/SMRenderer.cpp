@@ -148,7 +148,7 @@ void SMRenderer::render(double angle, SMVector& position, std::vector<SMLine>& l
                 
                 // magic numbers
                 // TODO optimize, looks nice for now though
-                uint32_t dimfact = uint32_t(500.0 * (smoothstep(0.0, 12.0, currentDist)));
+                uint32_t dimfact = uint32_t(500.0 * (smoothstep(0.0, 20.0, currentDist)));
                 pxcfloor = dim(pxcfloor, dimfact);
                 pxcroof = dim(pxcroof, dimfact);
 
