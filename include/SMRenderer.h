@@ -92,7 +92,7 @@ namespace smtech1 {
             inline void drawLine(SMLine line);
             inline void vLine(int x, int y1, int y2, uint32_t  color);
             inline void texVLine(int x, int y1, int y2, double dist, double fract, double len, double ssconst, int w, int h, BMP* texture);
-            std::vector<RaycastHit> castLines(SMVector& position, double angle, std::vector<SMLine>& lines);
+            inline std::vector<RaycastHit> castLines(SMVector& position, double angle, std::vector<SMLine>& lines);
             inline SMVector project(const SMVector& vecta, const double angle, const SMVector& position);
             inline void drawHud();
             inline void drawMap();

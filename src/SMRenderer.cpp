@@ -21,8 +21,6 @@ SMRenderer::SMRenderer(uint32_t width, uint32_t height) : width(width), height(h
     debugLines.rightPlane = { { player.x + planeDist *  1.0 * sin(fov / 2.0), player.y - planeDist }, { player.x + planeDist *  1.0 * sin(fov / 2.0) * 100.0, player.y - planeDist * 100.0 }, 0xFF00FF };
     debugLines.projectionPlane = { { player.x + planeDist * -1.0 * sin(fov / 2.0), player.y - planeDist }, { player.x + planeDist * 1.0 * sin(fov / 2.0), player.y - planeDist }, 0x00FFFF };
     castGap = 1;
-    
-    // raycaster = Raycaster(width, height, 32,  /* 60deg in rad */, 64, player, 1);
 }
 
 // grab SDL things from the game
@@ -160,6 +158,7 @@ void SMRenderer::render(double angle, SMVector& position, std::vector<SMLine>& l
         }
     }
 
+    /*
     for (auto t : things){
         //std::cout << t.pos.x << " " << t.pos.y << std::endl;
         SMVector projected = project(t.pos, angle, position);
@@ -171,11 +170,13 @@ void SMRenderer::render(double angle, SMVector& position, std::vector<SMLine>& l
         vLine(tx, 1, height - 1, 0xff0000);
         
     }
+    */
 
     // Draw HUD Elements
     drawHud();
+    
+    // Flip Buffer
     SDL_UpdateWindowSurface(window);
-
 }
 
 
@@ -292,7 +293,7 @@ inline void SMRenderer::drawPixel(int x, int y, uint32_t pixel) {
     #endif
 }
 
-std::vector<SMRenderer::RaycastHit> SMRenderer::castLines(SMVector& position, double angle, std::vector<SMLine>& lines) {
+inline std::vector<SMRenderer::RaycastHit> SMRenderer::castLines(SMVector& position, double angle, std::vector<SMLine>& lines) {
     std::vector<RaycastHit> projectedLines;
     projectedLines.reserve((uint32_t)(width / castGap));
     // iterate through all the rays to cast
@@ -462,11 +463,10 @@ inline void SMRenderer::drawMap() {
         //        drawPixel(i.vec.x, i.vec.y, 0xffffff);
         //    }
         //}
-         
-
-        //drawLine(raycaster.debugLines.projectionPlane);
-        //drawLine(raycaster.debugLines.leftPlane);
-        //drawLine(raycaster.debugLines.rightPlane);
+        
+        drawLine(debugLines.projectionPlane);
+        drawLine(debugLines.leftPlane);
+        drawLine(debugLines.rightPlane);
 
     }
     */
