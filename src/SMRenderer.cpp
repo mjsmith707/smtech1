@@ -1,505 +1,187 @@
 //
 //  SMRenderer.cpp
 //  smtech1
-
-
 #include "SMRenderer.h"
-
-#if defined (__WINDOWS__) 
-    //#define __SNAIL__
-#endif
 
 using namespace smtech1;
 
 // Initialize thread controls, width, height
-SMRenderer::SMRenderer(uint32_t width, uint32_t height) : renderThread(), renderRunning(false), width(width), height(height), trashcaster(width, height) {
-    player.x = static_cast<double>(width/2);
-    player.y = static_cast<double>(height/2);
+// fov stuff:
+// 1.047197551196597746154 /* 60deg in rad */
+// 1.57079632679489661923132 /* 90deg in rad */
+SMRenderer::SMRenderer(uint32_t width, uint32_t height) : width(width), height(height), viewHeight(32), fov(1.047197551196597746154), planeDistance((width/2)/tan(fov/2)), columnSize(fov/width), gridSize(width/64), gridHeight(height/64), wallSize(64) {
+    
+    // Raycaster Init
+    // Need to duplicate player vector fields here... needs changing
+    player.x = static_cast<double>(width / 2);
+    player.y = static_cast<double>(height / 2);
     player.z = 0.0;
-    position.x = static_cast<double>(width/2);
-    position.y = static_cast<double>(height/2);
-    position.z = 0.0;
-    r_mode = DOOMCASTER;
-    
+    planeDist = 30;
+    debugLines.leftPlane = { { player.x + planeDist * -1.0 * sin(fov / 2.0), player.y - planeDist }, { player.x + planeDist * -1.0 * sin(fov / 2.0) * 100.0, player.y - planeDist * 100.0 }, 0xFFFF00 };
+    debugLines.rightPlane = { { player.x + planeDist *  1.0 * sin(fov / 2.0), player.y - planeDist }, { player.x + planeDist *  1.0 * sin(fov / 2.0) * 100.0, player.y - planeDist * 100.0 }, 0xFF00FF };
+    debugLines.projectionPlane = { { player.x + planeDist * -1.0 * sin(fov / 2.0), player.y - planeDist }, { player.x + planeDist * 1.0 * sin(fov / 2.0), player.y - planeDist }, 0x00FFFF };
+    castGap = 4;
 }
 
-// Destructor shuts down thread before rejoining
-// Beautiful RAII at work
-SMRenderer::~SMRenderer() {
-    renderRunning = false;
-    if (renderThread.joinable()) {
-        renderThread.join();
-    }
-}
-
-// Public run call for render thread
-void SMRenderer::run() {
-    renderRunning = true;
-// If OSX or Windows run in calling thread
-// If Linux/Unix run in new thread
-#if defined( __MACH__)
-    threadinit();
-#elif defined(__WINDOWS__)
-    threadinit();
-#else
-    renderThread = std::thread(&SMRenderer::threadinit, this);
-#endif
-}
-
-// Render thread entry point
-// Initialize SDL window and surface
-void SMRenderer::threadinit() {
-    // 100 years from now we'll return these errors to a Game class or something
-    if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-        std::cout << "SDL Init Failed" << std::endl;
-        return;
-    }
-    else {
-        std::cout << "SDL Init Successful" << std::endl;
-    }
-    
-    window = NULL;
-    screen = NULL;
-
-    // Initialize the SDL Window
-    window = SDL_CreateWindow("smtech1", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, width, height, SDL_WINDOW_SHOWN);
-    if (window == NULL) {
-        std::cout << "Window not created: " << SDL_GetError() << std::endl;
-        return;
-    }
-    else {
-        // Grab SDL_Surface, draw initial blank screen
-        screen = SDL_GetWindowSurface(window);
-        renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-        
-        SDL_FillRect(screen, NULL, SDL_MapRGB(screen->format, 0x0, 0x0, 0x0));
-        SDL_UpdateWindowSurface(window);
-       
-    }
-
-    // Grab Mouse
-    mousemode = SDL_SetRelativeMouseMode(SDL_TRUE) == 0 ? true : false;
-
-    // Create some render data
-    initMeshes();
-    
-    // Load 2D Sprites
-    initSprites();
-
-    // minimap init
-    SMVector mapbl = { 10.0, 10.0, 0 };
-    SMVector maptr = { 100.0, 100.0, 0 };
-    minimap = { mapbl, maptr, 0xFFFF66, 0x00ff00 };
-    mapactive = true;
-    mapfullscreen = false;
-
-    // trashcaster
-    //it's broken so forget it
-    //trashcaster.loadMap(lines);
-    
-    // raycaster
-    //1.047197551196597746154 /* 60deg in rad */
-    //1.57079632679489661923132 /* 90deg in rad */
-    raycaster = Raycaster(width, height, 32, 1.047197551196597746154 /* 60deg in rad */, 64, player, 1);
-
-    // Enter render loop
-    render();
-
-    // Cleanup
-    SDL_Quit();
-}
-
-// Loads meshes into SMMesh objects for rendering
-// Will be replaced with a file format and more concrete Mesh structure
-void SMRenderer::initMeshes() {
-    std::string filename = "test.txt";
-    MapLoader maploader;
-    lines = maploader.loadMap(filename);
-}
-
-void SMRenderer::initSprites() {
-    // Sprites
-    // Slot 0 in sprites is gun uhhehherr
-    // Slot 1 is doomguy
-    /*
-    // Chainsaw
-    std::string saw1 = "SAWGA0.bmp";
-    std::string saw2 = "SAWGB0.bmp";
-    std::string saw3 = "SAWGC0.bmp";
-    std::string saw4 = "SAWGD0.bmp";
-    std::vector<std::string> sawfiles {saw1,saw2,saw3,saw4};
-    Sprite saw { sawfiles, 30, (width/2)-30, height-100, false};
-    sprites.push_back(saw);
-    */
-    std::string sg1 = "SHTGA0.bmp";
-    std::string sg2 = "SHTGB0.bmp";
-    std::string sg3 = "SHTGC0.bmp";
-    std::string sg4 = "SHTGD0.bmp";
-    std::vector<std::string> sgfiles {sg1,sg2,sg3,sg4};
-    Sprite shotgun { sgfiles, 10, (width/2)-40, height-100, false, false};
-    sprites.push_back(shotgun);
-    
-    // Doomguy
-    std::string dg1 = "STFST30.bmp";
-    std::string dg2 = "STFST31.bmp";
-    std::string dg3 = "STFST32.bmp";
-    std::string dg4 = "STFTL30.bmp";
-    std::string dg5 = "STFTR30.bmp";
-    std::vector<std::string> doomguyfiles {dg1,dg2,dg3,dg4,dg5};
-    Sprite doomguy { doomguyfiles, 75, (width/2)-30, height-40, false, true };
-    sprites.push_back(doomguy);
-
-    std::vector<std::string> wallFile{"dankwall.bmp"};
-    Sprite wall{wallFile, 0, 0, 0, true, false};
-    sprites.push_back(wall);
-
-    std::vector<std::string> floorFile{ "floor.bmp" };
-    Sprite floor{ floorFile, 0, 0, 0, true, false };
-    sprites.push_back(floor);
-
-    std::vector<std::string> roofFile{ "roof.bmp" };
-    Sprite roof{ roofFile, 0, 0, 0, true, false };
-    sprites.push_back(roof);
+// grab SDL things from the game
+void SMRenderer::init(SDL_Window*& w, SDL_Surface*& s, SDL_Renderer*& r){
+    window = w;
+    screen = s;
+    renderer = r;
 }
 
 // Main render thread loop function
-void SMRenderer::render() {
-    #if defined( __MACH__)
-        // Frame capping still WIP
-        // std::chrono is wack to work with
-        const int r_fps = 60;
-        // Framerate as 1/60th of a second
-        using framerate = std::chrono::duration<uint64_t, std::ratio<1, r_fps>>;
-        uint64_t lastfpstime = 0;
-        uint64_t fps = 0;
-        auto lasttime = std::chrono::high_resolution_clock::now();
-    #endif
-    
-    SDL_Event event;
-    
-    // Main render loop
-    // Checks atomic renderRunning bool to see if we should quit
-    while (renderRunning) {
-        #if defined( __MACH__)
-            // Frame capping still TODO
-            auto currtime = std::chrono::high_resolution_clock::now();
-            auto frametime = currtime - lasttime;
-            lasttime = currtime;
+void SMRenderer::render(double angle, SMVector& position, std::vector<SMLine>& lines, Texture*& ceiling, Texture*& floor, std::vector<SMThing>& things) {
 
-            lastfpstime += frametime.count();
-            fps++;
+    // Raycast lines
+    std::vector<RaycastHit> intersections = castLines(position, angle, lines);
+    
+    int lastDrawnX = -1;
 
-            // Take this with a grain of salt
-            // Needs to be converted to std::chrono somehow
-            if (lastfpstime > 1000000000) {
-                std::cout << "fps: " << fps << std::endl;
-                lastfpstime = 0;
-                fps = 0;
-            }
-        #endif
-        #if defined(__SNAIL__)
-            SDL_SetRenderDrawColor(renderer, 0x0, 0x0, 0x0, 0xff);
-            SDL_RenderClear(renderer);
-        #else
-            // Erase framebuffer
-            //drawBlank();
-        #endif
+    // zbuffer for properly drawing things
+    std::vector<double> zbuffer;
+    zbuffer.resize(width);
+
+    while (!intersections.empty()) {
+        RaycastHit i = intersections.front();
+        std::pop_heap(intersections.begin(), intersections.end());
+        intersections.pop_back();
+
+        if (i.x == lastDrawnX){
+            continue;
+        }
+        else {
+            lastDrawnX = i.x;
+            zbuffer[i.x] = i.dist;
+        }
         
-        switch (r_mode) {
-            case DOOMCASTER: {
-                std::vector<RaycastHit> intersections = raycaster.castLines(position, angle, lines);
-                minimap.intersections = intersections;
-                uint32_t drawn = 0;
-                uint32_t skipped = 0;
-                uint32_t lastDrawnX = -1;
-                uint32_t size = intersections.size();
-                //std::cout << position.x << " " << position.y << std::endl;
+        double lineh = std::abs(((double)height / (double)i.dist));
 
-                while (!intersections.empty()) {
-                    RaycastHit i = intersections.front();
-                    std::pop_heap(intersections.begin(), intersections.end());
-                    intersections.pop_back();
+        lineh *= texHeight;
 
-                    if (i.x == lastDrawnX){
-                        skipped++;
-                        continue;
-                    }
-                    else {
-                        lastDrawnX = i.x;
-                    }
+        double drawStart = -lineh / 2.0 + (double)height / 2.0;
+        double drawEnd = lineh / 2.0 + (double)height / 2.0;
 
-                    drawn++;
+        if (drawStart < 0) drawStart = 0;
+        if (drawEnd >= height) drawEnd = height - 1;
 
-                    double lineh = std::abs(((double)height / (double)i.dist));
-                    //std::cout << lineh << std::endl;
-                    lineh *= sprites[2].getHeight();
-                    
-                    double drawStart = -lineh / 2.0 + (double)height / 2.0;
-                    double drawEnd = lineh / 2.0 + (double)height / 2.0;                    
+        /*
+        uint32_t pxWidth = (uint32_t)lineh / texHeight;
+        uint32_t numDrawn = 0;
+        uint32_t currPx = i.x % texWidth;
+        */
 
-                    if (drawStart < 0) drawStart = 0;
-                    if (drawEnd >= height) drawEnd = height-1;
+        // for texture mapping
+        double len = (i.line.pt1.dist(i.line.pt2));
+        double fract = i.line.pt1.dist(i.vec) / len;
 
-                    uint32_t pxWidth = lineh / sprites[2].getHeight();
-                    uint32_t numDrawn = 0;
-                    uint32_t currPx = i.x % sprites[2].getWidth();
+        // this works, but it loses a lot of accuracy along the edges
+        //double fract = i.line.pt1.fastDist(i.vec) / (i.line.pt1.fastDist(i.line.pt2));
 
-                    // for texture mapping
-                    double len = (i.line.pt1.dist(i.line.pt2));
-                    double fract = i.line.pt1.dist(i.vec) / len;
-                     
-                    // this works, but it loses a lot of accuracy along the edges
-                    //double fract = i.line.pt1.fastDist(i.vec) / (i.line.pt1.fastDist(i.line.pt2));
-    
-                    // smoothstep constant to dim by
-                    // pretty arbitrary, have to play around with the values a lot to get things that look good
-                    // especially depending on the current texture darkness
-                    double ssconst = 500.0 * smoothstep(300.0, 800.0, i.dist);
+        // smoothstep constant to dim by
+        // pretty arbitrary, have to play around with the values a lot to get things that look good
+        // especially depending on the current texture darkness
+        double ssconst = 500.0 * smoothstep(300.0, 800.0, i.dist);
 
-                    for (int d = 0; d < raycaster.castGap; d++){
-                        // monocolored, shaded walls
-                        //vLine(i.x + d, drawStart, drawEnd, dim(i.line.color, 200.0 * smoothstep(0.0, 500.0, i.dist)));
+        for (uint32_t d = 0; d < castGap; d++){
+            // monocolored, shaded walls
+            //vLine(i.x + d, drawStart, drawEnd, dim(i.line.color, 200.0 * smoothstep(0.0, 500.0, i.dist)));
 
-                        // textured walls
-                        // TODO fix shading factor
-                        texVLine(i.x + d, drawStart, drawEnd, i.dist, fract, len, ssconst, sprites[2].getWidth(), sprites[2].getHeight(), sprites[2].staticView());
+            // textured walls
+            // TODO fix shading factor
+            texVLine(i.x + d, (uint32_t)drawStart, (uint32_t)drawEnd, i.dist, fract, len, ssconst, texWidth, texHeight, i.line.texture->staticView);
 
-                        // monocolor roof
-                        //vLine(i.x + d, 0, drawStart, 0x111111);
+            // monocolor roof
+            //vLine(i.x + d, 0, drawStart, 0x111111);
 
-                        // monocolor floor
-                        //vLine(i.x + d, drawEnd, height, 0x020202);
+            // monocolor floor
+            //vLine(i.x + d, drawEnd, height, 0x020202);
 
-                        // plane casting for ceil&floor
-                        double planeXWall, planeYWall; 
+            // plane casting for ceil&floor
+            double planeXWall, planeYWall;
 
-                        // 'unproject' so we're casting against the actual 'map axes' and not relative 
-                        // to the player's position, which stays constant all th e time
-                        SMVector transv = raycaster.project(SMVector{i.vec.x, i.vec.y, 0}, -angle, player);
+            // 'unproject' so we're casting against the actual 'map axes' and not relative
+            // to the player's position, which stays constant all the time
+            SMVector transv = project(SMVector{ i.vec.x, i.vec.y, 0 }, -angle, player);
 
-                        planeXWall = transv.x;
-                        planeYWall = transv.y;
+            planeXWall = transv.x;
+            planeYWall = transv.y;
 
-                        double distWall, currentDist;
+            double distWall, currentDist;
 
-                        distWall = i.dist;
-                        double h = player.y * 2.0;
+            distWall = i.dist;
 
-                        // practically, texture width and height will be a constant throughout the engine so 
-                        // these should also be engine-level constants
-                        int texWidth = sprites[3].getWidth();
-                        int texHeight = sprites[3].getHeight();
+            //draw the floor from drawEnd to the bottom of the screen
+            for (uint32_t y = (uint32_t)drawEnd + 1; y < height; y++)
+            {
+                // TODO cache this
+                currentDist = height / (2.0 * y - height);
 
-                        //draw the floor from drawEnd to the bottom of the screen
-                        for (int y = drawEnd + 1; y < h; y++)
-                        {
-                            currentDist = h / (2.0 * y - h);
-                            double weight = currentDist / distWall;
+                // TODO optimize away with some bitshifts
+                double weight = currentDist / distWall;
 
-                            // player's position is always (player.x, player.y), aka (width/2, height/2) since the
-                            // world is transformed and moved around the player instead of the other way around
-                            double currentFloorX = weight * planeXWall + (1.0 - weight) * player.x;
-                            double currentFloorY = weight * planeYWall + (1.0 - weight) * player.y;
+                // player's position is always (player.x, player.y), aka (width/2, height/2) since the
+                // world is transformed and moved around the player instead of the other way around
+                double currentFloorX = weight * planeXWall + (1.0 - weight) * player.x;
+                double currentFloorY = weight * planeYWall + (1.0 - weight) * player.y;
 
-                            int floorTexX, floorTexY;
-                            floorTexX = int(currentFloorX * texWidth - position.x) % texWidth;
-                            floorTexY = int(currentFloorY * texHeight - position.y) % texHeight;
+                int floorTexX, floorTexY;
+                floorTexX = int(currentFloorX * texWidth - position.x) % texWidth;
+                floorTexY = int(currentFloorY * texHeight - position.y) % texHeight;
 
-                            // from here, draw the pixels
-                            RGBApixel pix = sprites[3].staticView()->GetPixel(floorTexX, floorTexY);
+                // from here, draw the pixels
+                // REFACTORTODO floor/ceil texture references
+                // REFACTORTODO get pixels in 'our format'
+                RGBApixel pix = ceiling->staticView->GetPixel(floorTexX, floorTexY);
 
-                            // TODO sprite.pixel(x, y) returns uint32_t with all of these transforms applied
-                            uint32_t pxcfloor = (unsigned char)pix.Alpha << 24;
-                            pxcfloor += ((unsigned char)pix.Red << 16);
-                            pxcfloor += ((unsigned char)pix.Green << 8);
-                            pxcfloor += ((unsigned char)pix.Blue);
+                // TODO sprite.pixel(x, y) returns uint32_t with all of these transforms applied
+                uint32_t pxcfloor = (unsigned char)pix.Alpha << 24;
+                pxcfloor += ((unsigned char)pix.Red << 16);
+                pxcfloor += ((unsigned char)pix.Green << 8);
+                pxcfloor += ((unsigned char)pix.Blue);
 
-                            pix = sprites[4].staticView()->GetPixel(floorTexX, floorTexY);
-                            uint32_t pxcroof = (unsigned char)pix.Alpha << 24;
-                            pxcroof += ((unsigned char)pix.Red << 16);
-                            pxcroof += ((unsigned char)pix.Green << 8);
-                            pxcroof += ((unsigned char)pix.Blue);
-
-                            // magic numbers
-                            // TODO optimize, works for now though
-                            uint32_t dimfact = 500.0 * (smoothstep(0.0, 12.0, currentDist));
-                            pxcfloor = dim(pxcfloor, dimfact);
-                            pxcroof = dim(pxcroof, dimfact);
-
-                            drawPixel(i.x + d, y, pxcfloor);
-                            drawPixel(i.x + d, h - y, pxcroof);
-                        }
-                    }
-                       
-                }
-                break;
-            }
-            case TRASHCASTER: {
-                /*
-                std::vector<SMLine> projectedLines = trashcaster.raycast(position, angle);
+                pix = floor->staticView->GetPixel(floorTexX, floorTexY);
+                uint32_t pxcroof = (unsigned char)pix.Alpha << 24;
+                pxcroof += ((unsigned char)pix.Red << 16);
+                pxcroof += ((unsigned char)pix.Green << 8);
+                pxcroof += ((unsigned char)pix.Blue);
                 
-                for (auto i : projectedLines) {
-                    drawLine(i.pt1.x, i.pt1.y, i.pt2.x, i.pt2.y, i.color);
-                }
-                 */
-                break;
+                // magic numbers
+                // TODO optimize, looks nice for now though
+                uint32_t dimfact = uint32_t(500.0 * (smoothstep(0.0, 20.0, currentDist)));
+                pxcfloor = dim(pxcfloor, dimfact);
+                pxcroof = dim(pxcroof, dimfact);
+
+                drawPixel(i.x + d, y, pxcfloor);
+                drawPixel(i.x + d, height - y, pxcroof);
             }
         }
+    }
+
+    /*
+    for (auto t : things){
+        //std::cout << t.pos.x << " " << t.pos.y << std::endl;
+        SMVector projected = project(t.pos, angle, position);
+        //double dist = projected.dist(position);
+       
+        double tx = projected.x;
+        //double ty = projected.y;
+        if ((tx > 0 || tx < width - 2) && projected.y < height / 2)
+        vLine(tx, 1, height - 1, 0xff0000);
         
-        // Draw HUD Elements
-        drawHud();
-
-        #if defined (__SNAIL__)
-            SDL_RenderPresent(renderer);
-        #else 
-            // Flip buffer
-            SDL_UpdateWindowSurface(window);
-        #endif
-
-        // Check for input
-        // Will be spun off into a different class/thread someday
-        getInput(event);
-        
-        #if defined( __MACH__)
-            // This probably isn't correct.
-            while (frametime < framerate{1}) {
-                std::this_thread::sleep_for(frametime);
-                frametime += frametime;
-            }
-        #endif
     }
+    */
+
+    // Draw HUD Elements
+    drawHud();
+    
+    // Flip Buffer
+    SDL_UpdateWindowSurface(window);
 }
 
-inline void SMRenderer::getInput(SDL_Event& event) {
-    while (SDL_PollEvent(&event)) {
-        switch(event.type) {
-            case SDL_KEYDOWN: {
-                //std::cout << "keydown" << std::endl;
-                switch (event.key.keysym.sym) {
-                    case SDLK_w:
-                        position.y -= speed * sin(angle);
-						position.x -= speed * cos(angle);
-                        break;
-                    case SDLK_a:
-                        position.y += speed * sin(angle + (pi / 2.0));
-                        position.x += speed * cos(angle + (pi / 2.0));
-                        break;
-                    case SDLK_s:
-                        position.y += speed * sin(angle);
-                        position.x += speed * cos(angle);
-                        break;
-                    case SDLK_d:
-                        position.y += speed * sin(angle - (pi / 2.0));
-                        position.x += speed * cos(angle - (pi / 2.0));
-                        break;
-					case SDLK_LEFT:
-						if (angle <= 0) {
-							angle = pi2;
-						}
-						else if (angle >= pi2) {
-							angle = 0.01;
-						}
-						angle -= 0.01;
-						break;
-					case SDLK_RIGHT:
-						if (angle <= 0) {
-							angle = pi2;
-						}
-						else if (angle >= pi2) {
-							angle = 0.01;
-						}
-						angle += 0.01;
-						break;
-                    case SDLK_ESCAPE:
-                        if (mousemode) {
-                            mousemode = SDL_SetRelativeMouseMode(SDL_FALSE) == 0 ? false : true;
-                        }
-                        else {
-                            mousemode = SDL_SetRelativeMouseMode(SDL_TRUE) == 0 ? true : false;
-                        }
-                        break;
-                    case SDLK_TAB:
-                        if (!mapactive) {
-                            mapactive = true;
-                            minimap.bl = SMVector{ 10.0, 10.0 };
-                            minimap.tr = SMVector{ 100.0, 100.0 };
-                        }
-                        else if (mapactive && !mapfullscreen) {
-                            mapfullscreen = true;
-                            minimap.bl = SMVector{ 0.0, 0.0 };
-                            minimap.tr = SMVector{ player.x * 2.0, player.y * 2.0 };
-                        }
-                        else if (mapactive && mapfullscreen) {
-                            mapactive = false;
-                            mapfullscreen = false;
-                        }
-                        break;
-                    case SDLK_1:
-                        r_mode = TRASHCASTER;
-                        break;
-                    case SDLK_2:
-                        r_mode = DOOMCASTER;
-                        break;
-                    case SDLK_q:
-                        renderRunning = false;
-                        break;
-                }
-                //std::cout << "position: <" << position.x << ", " << position.y << ">" << std::endl
-                //<< "angle: " << angle << std::endl;
-                return;
-            }
-            case SDL_MOUSEMOTION: {
-                if (!mousemode) {
-                    break;
-                }
-                // Clamping camera angle to 0<2pi with wraparound;
-                if (event.motion.xrel < 0) {
-                    if (angle <= 0) {
-                        angle = pi2;
-                    }
-                    else if (angle >= pi2) {
-                        angle = 0.01;
-                    }
-                    angle -= 0.04;
-                }
-                else if (event.motion.xrel > 0) {
-                    if (angle <= 0) {
-                        angle = pi2;
-                    }
-                    else if (angle >= pi2) {
-                        angle = 0.01;
-                    }
-                    angle += 0.04;
-                }
-            }
-            case SDL_MOUSEBUTTONDOWN: {
-                if (!mousemode) {
-                    break;
-                }
-                else if (event.button.button == SDL_BUTTON_LEFT) {
-                    // I didn't really think this part though yet
-                    if (sprites.size() > 0) {
-                        sprites.at(0).playAnimation();
-                    }
-                }
-            }
-            //std::cout << "position: <" << player.x << ", " << player.y << ">" << std::endl
-            //<< "angle: " << angle << std::endl;
-        }
-    }
-}
-
-// Blanks surface
-inline void SMRenderer::drawBlank() {
-    for (unsigned int y=0; y<height; y++) {
-        for (unsigned int x=0; x<width; x++) {
-            drawPixel(x,y,0x0);
-        }
-    }
-}
 
 // Textured wall vline
-inline void SMRenderer::texVLine(int x1, int y1, int y2, int dist, double fract, double len, double ssconst, int w, int h, BMP* texture) {
+inline void SMRenderer::texVLine(int x1, int y1, int y2, double dist, double fract, double len, double ssconst, int w, int h, BMP* texture) {
 #if defined(__SNAIL__)
     drawLine(x1, y1, x1, y2, color);
 #else
@@ -517,15 +199,14 @@ inline void SMRenderer::texVLine(int x1, int y1, int y2, int dist, double fract,
         pxc += ((unsigned char)pix.Green << 8);
         pxc += ((unsigned char)pix.Blue);
 
-        pxc = dim(pxc, ssconst);
+        pxc = dim(pxc, uint32_t(ssconst));
 
         drawPixel(x1, y1 + i, pxc);
     }
 #endif
 }
 
-
-// Vertical Line
+// vertical pixel line of monocolor
 inline void SMRenderer::vLine(int x1, int y1, int y2, uint32_t color) {
     #if defined(__SNAIL__)
         drawLine(x1, y1, x1, y2, color);
@@ -612,6 +293,83 @@ inline void SMRenderer::drawPixel(int x, int y, uint32_t pixel) {
     #endif
 }
 
+inline std::vector<SMRenderer::RaycastHit> SMRenderer::castLines(SMVector& position, double angle, std::vector<SMLine>& lines) {
+    std::vector<RaycastHit> projectedLines;
+    projectedLines.reserve((uint32_t)(width / castGap));
+    // iterate through all the rays to cast
+    // castgap defines the distance between raycasts
+    for (int a = 0; a < width / castGap; a++){
+        // intersection point gets put in here, if any intersection happens
+        SMVector intersect;
+
+        // the ray to cast
+        // start casting from player's position outwards, so pt1 = {player.x, player.y}
+        // pt2.x: 
+        // transform player's x outwards based on current angle
+        //                        -0.5 -> 0.5
+        //                                       ratio of current position:total 
+        //                                       positions so, a % of progress
+        //                                                                                 trig stuff,
+        //                                                                                 * 2 earlier so 
+        //                                                                                 / 2 now
+        //                                                                                                 "ray", just sent really far basically
+        //                                                                                                 this multiplier doesn't really matter
+        //                                                                                                 since smline::intersect checking broken
+        // player.x + planeDist * (-1.0 + 2.0 * ((double)(a * castGap) / (double)width)) * sin(fov / 2.0) * 100.0
+        //
+        // pt2.y is just simple extension of the ray
+        SMLine ray = { { player.x, player.y }, { player.x + planeDist * (-1.0 + 2.0 * ((double)(a * castGap) / (double)width)) * sin(fov / 2.0) * 100.0, player.y - planeDist * 100.0 }, 0xFFFF00 };
+
+        // go through each line on the map (this is where BSP would come in)
+        for (auto i : lines){
+            // the line to intersect; project the line so it's relative to our orientation
+            SMLine toIntersect = { project(i.pt1, angle, position), project(i.pt2, angle, position), i.color };
+            
+            // if there was an intersection
+            if (toIntersect.intersect(ray, intersect)){
+                SMVector vec = intersect;
+                // don't count intersections behind the player
+                if (vec.y < player.y - planeDist){
+
+                    // the line we actually intersected
+                    SMLine line = toIntersect;
+                    
+                    // grab the texture pointer of the intersected line
+                    line.texture = i.texture;
+
+                    // dist to intersection point (this doesn't suffer from the 'fisheye' effect because casting 
+                    // happens from the plane (planeDist) instead of from player, basically have a 2d frustum
+                    double dist = std::sqrt(std::pow((player.y - intersect.y), 2.0) + std::pow((player.x - intersect.x), 2.0));
+
+                    projectedLines.push_back(RaycastHit{ vec, line, ray, dist, static_cast<int>((a * castGap)) });
+                    std::push_heap(projectedLines.begin(), projectedLines.end());
+                }
+            }
+        }
+    }
+
+    return projectedLines;
+}
+
+inline SMVector SMRenderer::project(const SMVector& vecta, const double angle, const SMVector& position) {
+    // Do some fancy vector math
+   
+        SMVector result;
+
+        // offset position
+        double x = vecta.x - position.x;
+        double y = vecta.y - position.y;
+
+        // camera transform
+        result.x = x * sin(angle) - y * cos(angle);
+        result.y = x * cos(angle) + y * sin(angle);
+
+        result.x += player.x;
+        result.y += player.y;
+
+        return result;
+}
+
 // Draw 2D elements on top of rendered scene
 inline void SMRenderer::drawHud() {
     // Draw Minimap
@@ -621,7 +379,9 @@ inline void SMRenderer::drawHud() {
     drawSprites();
 }
 
+// REFACTORTODO figure out sprite rendering, probably pass in a map here
 inline void SMRenderer::drawSprites() {
+    /*
     for (auto& i : sprites) {
         if (!i.isTexture()){
             if (i.isPlaying()) {
@@ -642,11 +402,12 @@ inline void SMRenderer::drawSprites() {
             }
         }
     }
+    */
 }
 
 inline void SMRenderer::drawBMP(const uint32_t bmpwidth, const uint32_t bmpheight, const uint32_t xrel, const uint32_t yrel, BMP* bmp) {
-    for (int bmpy=0; bmpy<bmpheight; bmpy++) {
-        for (int bmpx=0; bmpx<bmpwidth; bmpx++) {
+    for (uint32_t bmpy=0; bmpy < bmpheight; bmpy++) {
+        for (uint32_t bmpx=0; bmpx < bmpwidth; bmpx++) {
             RGBApixel bmppixel = bmp->GetPixel(bmpx, bmpy);
             uint32_t pixel = 0;
             pixel = ((unsigned char)bmppixel.Alpha << 24);
@@ -664,7 +425,10 @@ inline void SMRenderer::drawBMP(const uint32_t bmpwidth, const uint32_t bmpheigh
 
 // Will greatly simplify rendering order at the expensive of a second
 // (forthcoming) pruned lines list traversal
+
+// REFACTORTODO figure out how to fix this
 inline void SMRenderer::drawMap() {
+    /*
     if (!mapactive) {
         return;
     }
@@ -690,85 +454,25 @@ inline void SMRenderer::drawMap() {
         drawLine(minimap.tr.x, minimap.bl.y, minimap.tr.x, minimap.tr.y, minimap.boxcolor);
     }
     else {
-        /*
-        for (auto i : minimap.intersections){
-            if (i.x % 30 == 0){
-                SMVector p1 = i.ray.pt1;
-                SMVector p2 = i.ray.pt2;
-                
-                
-                
-                drawLine(p1.x, p1.y, p2.x, p2.y, i.line.color);
-                drawPixel(i.vec.x, i.vec.y, 0xffffff);
-            }
-        }
-         */
-
-        //drawLine(raycaster.debugLines.projectionPlane);
-        //drawLine(raycaster.debugLines.leftPlane);
-        //drawLine(raycaster.debugLines.rightPlane);
+        
+        //for (auto i : minimap.intersections){
+        //    if (i.x % 30 == 0){
+        //        SMVector p1 = i.ray.pt1;
+        //        SMVector p2 = i.ray.pt2;        
+        //        drawLine(p1.x, p1.y, p2.x, p2.y, i.line.color);
+        //        drawPixel(i.vec.x, i.vec.y, 0xffffff);
+        //    }
+        //}
+        
+        drawLine(debugLines.projectionPlane);
+        drawLine(debugLines.leftPlane);
+        drawLine(debugLines.rightPlane);
 
     }
+    */
 }
 
-// Vector intersection
-SMVector SMRenderer::intersection(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4) {
-    int x = crossProduct(x1, y1, x2, y2);
-    int y = crossProduct(x3, y3, x4, y4);
-    //int det = crossProduct(x1-x2, y1-y2, x3-x4, y3-y4);
-    x = crossProduct(x, x1-x2, y, x3-x4);
-    y = crossProduct(x, y1-y2, y, y3-y4);
-    
-    SMVector result;
-    result.x = x;
-    result.y = y;
-    result.z = 0;
-    return result;
-}
 
-// Some useless vector math functions
-inline double SMRenderer::dotProduct(const SMVector& vecta, const SMVector& vectb) {
-    double dot = vecta.x * vectb.x;
-    dot += vecta.y * vectb.y;
-    return dot;
-}
-
-// Black magic
-inline double SMRenderer::crossProduct(double x1, double y1, double x2, double y2) {
-    int result = x1*y2 - y1*x2;
-    return result;
-}
-
-// Convert to normal vector
-SMVector SMRenderer::normalize(const SMVector& vecta) {
-    double length = sqrt(vecta.x*vecta.x + vecta.y*vecta.y);
-    SMVector result;
-    result.x = vecta.x/length;
-    result.y = vecta.y/length;
-    result.z = 0;
-    return result;
-}
-
-// Do some fancy vector math
-SMVector SMRenderer::project(const SMVector& vect) {
-    SMVector result;
-	
-    // offset position
-	double x = vect.x - position.x ;
-	double y = vect.y - position.y ;
-	
-	// camera transform
-	result.x = x * sin(angle) - y * cos(angle);
-	result.y = x * cos(angle) + y * sin(angle);
-
-	result.x += player.x;
-	result.y += player.y;
-
-    result.x = result.x;
-    result.y = result.x / result.y + player.y;
-
-    return result;
-}
 
 inline double SMRenderer::smoothstep(double min, double max, double val){
     // get 0 < smoothed < 1
