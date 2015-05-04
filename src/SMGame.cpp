@@ -71,7 +71,7 @@ void SMGame::threadinit() {
     // load all the assets based on the map's requirements
     // static function maybe?
     AssetLoader loader;
-    loader.loadAssets("loadertest.txt", spriteManager, map);
+    loader.loadAssets("thingloadertest.txt", spriteManager, map);
 
     // minimap init
     SMVector mapbl = { 10.0, 10.0, 0 };
@@ -101,7 +101,7 @@ void SMGame::threadinit() {
 
 void SMGame::game(){
     while (renderRunning){
-        // T)DO consistent FPS logic
+        // TODO consistent FPS logic
 
         // process input
         SDL_Event event;
@@ -111,7 +111,7 @@ void SMGame::game(){
         std::vector<RaycastHit> intersections = raycaster.castLines(position, angle, map.lines);
 
         // render results
-        smRenderer.render(intersections, raycaster.castGap, angle, position, raycaster, map.floor, map.ceiling);
+        smRenderer.render(intersections, raycaster.castGap, angle, position, raycaster, map.floor, map.ceiling, map.things);
     }
 }
 
@@ -119,7 +119,6 @@ inline void SMGame::getInput(SDL_Event& event) {
     while (SDL_PollEvent(&event)) {
         switch (event.type) {
         case SDL_KEYDOWN: {
-            //std::cout << "keydown" << std::endl;
             switch (event.key.keysym.sym) {
             case SDLK_w:
                 position.y -= speed * sin(angle);

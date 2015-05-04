@@ -22,7 +22,8 @@ void SMRenderer::init(SDL_Window* w, SDL_Surface* s, SDL_Renderer* r){
 }
 
 // Main render thread loop function
-void SMRenderer::render(std::vector<RaycastHit> intersections, uint32_t castgap, double angle, SMVector position, Raycaster raycaster, Texture* ceiling, Texture* floor) {
+void SMRenderer::render(std::vector<RaycastHit> intersections, uint32_t castgap, double angle, SMVector position, Raycaster raycaster, Texture* ceiling, Texture* floor, std::vector<SMThing> things) {
+    
 #if defined( __MACH__)
     // Frame capping still WIP
     // std::chrono is wack to work with
@@ -56,6 +57,11 @@ void SMRenderer::render(std::vector<RaycastHit> intersections, uint32_t castgap,
 #endif
 
     int lastDrawnX = -1;
+
+    // zbuffer for properly drawing things
+    std::vector<double> zbuffer;
+    zbuffer.resize(width);
+
     while (!intersections.empty()) {
         RaycastHit i = intersections.front();
         std::pop_heap(intersections.begin(), intersections.end());
@@ -66,8 +72,9 @@ void SMRenderer::render(std::vector<RaycastHit> intersections, uint32_t castgap,
         }
         else {
             lastDrawnX = i.x;
+            zbuffer[i.x] = i.dist;
         }
-
+        
         double lineh = std::abs(((double)height / (double)i.dist));
 
         lineh *= texHeight;
@@ -100,7 +107,6 @@ void SMRenderer::render(std::vector<RaycastHit> intersections, uint32_t castgap,
 
             // textured walls
             // TODO fix shading factor
-            // REFACTORTODO textures
             texVLine(i.x + d, (uint32_t)drawStart, (uint32_t)drawEnd, i.dist, fract, len, ssconst, texWidth, texHeight, i.line.texture->staticView);
 
             // monocolor roof
@@ -143,6 +149,7 @@ void SMRenderer::render(std::vector<RaycastHit> intersections, uint32_t castgap,
 
                 // from here, draw the pixels
                 // REFACTORTODO floor/ceil texture references
+                // REFACTORTODO get pixels in 'our format'
                 RGBApixel pix = ceiling->staticView->GetPixel(floorTexX, floorTexY);
 
                 // TODO sprite.pixel(x, y) returns uint32_t with all of these transforms applied
@@ -156,17 +163,29 @@ void SMRenderer::render(std::vector<RaycastHit> intersections, uint32_t castgap,
                 pxcroof += ((unsigned char)pix.Red << 16);
                 pxcroof += ((unsigned char)pix.Green << 8);
                 pxcroof += ((unsigned char)pix.Blue);
-
+                
                 // magic numbers
                 // TODO optimize, looks nice for now though
-                uint32_t dimfact = uint32_t(500.0 * (smoothstep(0.0, 12.0, currentDist)));
-                pxcfloor = dim(pxcfloor, dimfact);
-                pxcroof = dim(pxcroof, dimfact);
+                //uint32_t dimfact = uint32_t(500.0 * (smoothstep(0.0, 12.0, currentDist)));
+                //pxcfloor = dim(pxcfloor, dimfact);
+                //pxcroof = dim(pxcroof, dimfact);
 
                 drawPixel(i.x + d, y, pxcfloor);
                 drawPixel(i.x + d, height - y, pxcroof);
             }
         }
+    }
+
+    for (auto t : things){
+        //std::cout << t.pos.x << " " << t.pos.y << std::endl;
+        SMVector projected = raycaster.project(t.pos, angle, position);
+        double dist = projected.dist(position);
+       
+        double tx = projected.x;
+        double ty = projected.y;
+        if ((tx > 0 || tx < width - 2) && projected.y < height / 2)
+        vLine(tx, 1, height - 1, 0xff0000);
+        
     }
 
     // Draw HUD Elements
@@ -202,7 +221,7 @@ inline void SMRenderer::texVLine(int x1, int y1, int y2, double dist, double fra
         pxc += ((unsigned char)pix.Green << 8);
         pxc += ((unsigned char)pix.Blue);
 
-        pxc = dim(pxc, uint32_t(ssconst));
+        //pxc = dim(pxc, uint32_t(ssconst));
 
         drawPixel(x1, y1 + i, pxc);
     }

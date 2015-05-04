@@ -23,6 +23,7 @@
 #include "EasyBMP_BMP.h"
 #include "EasyBMP_DataStructures.h"
 #include "Sprite.h"
+#include "SMThing.h"
 
 namespace smtech1 {
     class SMRenderer {
@@ -48,8 +49,8 @@ namespace smtech1 {
             const uint32_t height;
 
             // texture w/h
-            const uint32_t texHeight = 128;
-            const uint32_t texWidth = 128;
+            const uint32_t texHeight = 64;
+            const uint32_t texWidth = 64;
 
             // player screen position, misnomer... always in the middle of the screen!
             SMVector playerPos;
@@ -87,7 +88,7 @@ namespace smtech1 {
             SMRenderer(uint32_t width, uint32_t height);
             void init(SDL_Window* window, SDL_Surface* screen, SDL_Renderer* renderer);
             // REFACTORTODO move most of these args into fields
-            void render(std::vector<RaycastHit> intersections, uint32_t castgap, double angle, SMVector position, Raycaster raycaster, Texture* ceiling, Texture* floor);
+            void render(std::vector<RaycastHit> intersections, uint32_t castgap, double angle, SMVector position, Raycaster raycaster, Texture* ceiling, Texture* floor, std::vector<SMThing> things);
     };
 }
 
