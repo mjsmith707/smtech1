@@ -166,9 +166,9 @@ void SMRenderer::render(std::vector<RaycastHit> intersections, uint32_t castgap,
                 
                 // magic numbers
                 // TODO optimize, looks nice for now though
-                //uint32_t dimfact = uint32_t(500.0 * (smoothstep(0.0, 12.0, currentDist)));
-                //pxcfloor = dim(pxcfloor, dimfact);
-                //pxcroof = dim(pxcroof, dimfact);
+                uint32_t dimfact = uint32_t(500.0 * (smoothstep(0.0, 12.0, currentDist)));
+                pxcfloor = dim(pxcfloor, dimfact);
+                pxcroof = dim(pxcroof, dimfact);
 
                 drawPixel(i.x + d, y, pxcfloor);
                 drawPixel(i.x + d, height - y, pxcroof);
@@ -221,7 +221,7 @@ inline void SMRenderer::texVLine(int x1, int y1, int y2, double dist, double fra
         pxc += ((unsigned char)pix.Green << 8);
         pxc += ((unsigned char)pix.Blue);
 
-        //pxc = dim(pxc, uint32_t(ssconst));
+        pxc = dim(pxc, uint32_t(ssconst));
 
         drawPixel(x1, y1 + i, pxc);
     }
