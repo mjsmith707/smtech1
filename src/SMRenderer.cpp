@@ -23,38 +23,6 @@ void SMRenderer::init(SDL_Window* w, SDL_Surface* s, SDL_Renderer* r){
 
 // Main render thread loop function
 void SMRenderer::render(std::vector<RaycastHit> intersections, uint32_t castgap, double angle, SMVector position, Raycaster raycaster, Texture* ceiling, Texture* floor, std::vector<SMThing> things) {
-    
-#if defined( __MACH__)
-    // Frame capping still WIP
-    // std::chrono is wack to work with
-    const int r_fps = 60;
-    // Framerate as 1/60th of a second
-    using framerate = std::chrono::duration<uint64_t, std::ratio<1, r_fps>>;
-    uint64_t lastfpstime = 0;
-    uint64_t fps = 0;
-    auto lasttime = std::chrono::high_resolution_clock::now();
-#endif
-
-    // Main render loop
-    // Checks atomic renderRunning bool to see if we should quit
-    
-#if defined( __MACH__)
-        // Frame capping still TODO
-        auto currtime = std::chrono::high_resolution_clock::now();
-        auto frametime = currtime - lasttime;
-        lasttime = currtime;
-
-        lastfpstime += frametime.count();
-        fps++;
-
-        // Take this with a grain of salt
-        // Needs to be converted to std::chrono somehow
-        if (lastfpstime > 1000000000) {
-            std::cout << "fps: " << fps << std::endl;
-            lastfpstime = 0;
-            fps = 0;
-        }
-#endif
 
     int lastDrawnX = -1;
 
@@ -192,13 +160,6 @@ void SMRenderer::render(std::vector<RaycastHit> intersections, uint32_t castgap,
     drawHud();
     SDL_UpdateWindowSurface(window);
 
-#if defined( __MACH__)
-    // This probably isn't correct.
-    while (frametime < framerate{ 1 }) {
-        std::this_thread::sleep_for(frametime);
-        frametime += frametime;
-    }
-#endif
 }
 
 
