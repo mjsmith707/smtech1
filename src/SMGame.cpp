@@ -3,7 +3,7 @@
 using namespace smtech1;
 
 // Initialize thread controls, width, height
-SMGame::SMGame(uint32_t width, uint32_t height) : renderThread(), renderRunning(false), width(width), height(height), smRenderer(width, height){
+SMGame::SMGame(uint32_t width, uint32_t height) : renderThread(), renderRunning(false), width(width), height(height), smRenderer(width, height) {
     player.x = static_cast<double>(width / 2);
     player.y = static_cast<double>(height / 2);
     player.z = 0.0;
@@ -80,15 +80,6 @@ void SMGame::threadinit() {
     mapactive = true;
     mapfullscreen = false;
 
-    // trashcaster
-    //it's broken so forget it  
-    //trashcaster.loadMap(lines);
-
-    // raycaster
-    //1.047197551196597746154 /* 60deg in rad */
-    //1.57079632679489661923132 /* 90deg in rad */
-    raycaster = Raycaster(width, height, 32, 1.047197551196597746154 /* 60deg in rad */, 64, player, 1);
-
     // initialize the renderer with SDL things
     smRenderer.init(window, screen, renderer);
 
@@ -134,11 +125,8 @@ void SMGame::game(){
         SDL_Event event;
         getInput(event);
 
-        // do raycasting
-        std::vector<RaycastHit> intersections = raycaster.castLines(position, angle, map.lines);
-
         // render results
-        smRenderer.render(intersections, raycaster.castGap, angle, position, raycaster, map.floor, map.ceiling, map.things);
+        smRenderer.render(angle, position, map.lines, map.floor, map.ceiling, map.things);
         
         #if defined( __MACH__)
             // This probably isn't correct.

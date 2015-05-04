@@ -6,24 +6,38 @@
 using namespace smtech1;
 
 // Initialize thread controls, width, height
-SMRenderer::SMRenderer(uint32_t width, uint32_t height) : width(width), height(height) {
-    playerPos = SMVector{ width / 2.0, height / 2.0, 0 };
-}
-
-SMRenderer::SMRenderer(): width(0), height(0){
-    std::cout << "Shouldn't be called" << std::endl;
+// fov stuff:
+// 1.047197551196597746154 /* 60deg in rad */
+// 1.57079632679489661923132 /* 90deg in rad */
+SMRenderer::SMRenderer(uint32_t width, uint32_t height) : width(width), height(height), viewHeight(32), fov(1.047197551196597746154), planeDistance((width/2)/tan(fov/2)), columnSize(fov/width), gridSize(width/64), gridHeight(height/64), wallSize(64) {
+    
+    // Raycaster Init
+    // Need to duplicate player vector fields here... needs changing
+    player.x = static_cast<double>(width / 2);
+    player.y = static_cast<double>(height / 2);
+    player.z = 0.0;
+    planeDist = 30;
+    debugLines.leftPlane = { { player.x + planeDist * -1.0 * sin(fov / 2.0), player.y - planeDist }, { player.x + planeDist * -1.0 * sin(fov / 2.0) * 100.0, player.y - planeDist * 100.0 }, 0xFFFF00 };
+    debugLines.rightPlane = { { player.x + planeDist *  1.0 * sin(fov / 2.0), player.y - planeDist }, { player.x + planeDist *  1.0 * sin(fov / 2.0) * 100.0, player.y - planeDist * 100.0 }, 0xFF00FF };
+    debugLines.projectionPlane = { { player.x + planeDist * -1.0 * sin(fov / 2.0), player.y - planeDist }, { player.x + planeDist * 1.0 * sin(fov / 2.0), player.y - planeDist }, 0x00FFFF };
+    castGap = 1;
+    
+    // raycaster = Raycaster(width, height, 32,  /* 60deg in rad */, 64, player, 1);
 }
 
 // grab SDL things from the game
-void SMRenderer::init(SDL_Window* w, SDL_Surface* s, SDL_Renderer* r){
+void SMRenderer::init(SDL_Window*& w, SDL_Surface*& s, SDL_Renderer*& r){
     window = w;
     screen = s;
     renderer = r;
 }
 
 // Main render thread loop function
-void SMRenderer::render(std::vector<RaycastHit> intersections, uint32_t castgap, double angle, SMVector position, Raycaster raycaster, Texture* ceiling, Texture* floor, std::vector<SMThing> things) {
+void SMRenderer::render(double angle, SMVector& position, std::vector<SMLine>& lines, Texture*& ceiling, Texture*& floor, std::vector<SMThing>& things) {
 
+    // Raycast lines
+    std::vector<RaycastHit> intersections = castLines(position, angle, lines);
+    
     int lastDrawnX = -1;
 
     // zbuffer for properly drawing things
@@ -53,9 +67,11 @@ void SMRenderer::render(std::vector<RaycastHit> intersections, uint32_t castgap,
         if (drawStart < 0) drawStart = 0;
         if (drawEnd >= height) drawEnd = height - 1;
 
+        /*
         uint32_t pxWidth = (uint32_t)lineh / texHeight;
         uint32_t numDrawn = 0;
         uint32_t currPx = i.x % texWidth;
+        */
 
         // for texture mapping
         double len = (i.line.pt1.dist(i.line.pt2));
@@ -69,7 +85,7 @@ void SMRenderer::render(std::vector<RaycastHit> intersections, uint32_t castgap,
         // especially depending on the current texture darkness
         double ssconst = 500.0 * smoothstep(300.0, 800.0, i.dist);
 
-        for (uint32_t d = 0; d < castgap; d++){
+        for (uint32_t d = 0; d < castGap; d++){
             // monocolored, shaded walls
             //vLine(i.x + d, drawStart, drawEnd, dim(i.line.color, 200.0 * smoothstep(0.0, 500.0, i.dist)));
 
@@ -88,7 +104,7 @@ void SMRenderer::render(std::vector<RaycastHit> intersections, uint32_t castgap,
 
             // 'unproject' so we're casting against the actual 'map axes' and not relative
             // to the player's position, which stays constant all the time
-            SMVector transv = raycaster.project(SMVector{ i.vec.x, i.vec.y, 0 }, -angle, playerPos);
+            SMVector transv = project(SMVector{ i.vec.x, i.vec.y, 0 }, -angle, player);
 
             planeXWall = transv.x;
             planeYWall = transv.y;
@@ -108,8 +124,8 @@ void SMRenderer::render(std::vector<RaycastHit> intersections, uint32_t castgap,
 
                 // player's position is always (player.x, player.y), aka (width/2, height/2) since the
                 // world is transformed and moved around the player instead of the other way around
-                double currentFloorX = weight * planeXWall + (1.0 - weight) * playerPos.x;
-                double currentFloorY = weight * planeYWall + (1.0 - weight) * playerPos.y;
+                double currentFloorX = weight * planeXWall + (1.0 - weight) * player.x;
+                double currentFloorY = weight * planeYWall + (1.0 - weight) * player.y;
 
                 int floorTexX, floorTexY;
                 floorTexX = int(currentFloorX * texWidth - position.x) % texWidth;
@@ -146,11 +162,11 @@ void SMRenderer::render(std::vector<RaycastHit> intersections, uint32_t castgap,
 
     for (auto t : things){
         //std::cout << t.pos.x << " " << t.pos.y << std::endl;
-        SMVector projected = raycaster.project(t.pos, angle, position);
-        double dist = projected.dist(position);
+        SMVector projected = project(t.pos, angle, position);
+        //double dist = projected.dist(position);
        
         double tx = projected.x;
-        double ty = projected.y;
+        //double ty = projected.y;
         if ((tx > 0 || tx < width - 2) && projected.y < height / 2)
         vLine(tx, 1, height - 1, 0xff0000);
         
@@ -276,6 +292,83 @@ inline void SMRenderer::drawPixel(int x, int y, uint32_t pixel) {
     #endif
 }
 
+std::vector<SMRenderer::RaycastHit> SMRenderer::castLines(SMVector& position, double angle, std::vector<SMLine>& lines) {
+    std::vector<RaycastHit> projectedLines;
+    projectedLines.reserve((uint32_t)(width / castGap));
+    // iterate through all the rays to cast
+    // castgap defines the distance between raycasts
+    for (int a = 0; a < width / castGap; a++){
+        // intersection point gets put in here, if any intersection happens
+        SMVector intersect;
+
+        // the ray to cast
+        // start casting from player's position outwards, so pt1 = {player.x, player.y}
+        // pt2.x: 
+        // transform player's x outwards based on current angle
+        //                        -0.5 -> 0.5
+        //                                       ratio of current position:total 
+        //                                       positions so, a % of progress
+        //                                                                                 trig stuff,
+        //                                                                                 * 2 earlier so 
+        //                                                                                 / 2 now
+        //                                                                                                 "ray", just sent really far basically
+        //                                                                                                 this multiplier doesn't really matter
+        //                                                                                                 since smline::intersect checking broken
+        // player.x + planeDist * (-1.0 + 2.0 * ((double)(a * castGap) / (double)width)) * sin(fov / 2.0) * 100.0
+        //
+        // pt2.y is just simple extension of the ray
+        SMLine ray = { { player.x, player.y }, { player.x + planeDist * (-1.0 + 2.0 * ((double)(a * castGap) / (double)width)) * sin(fov / 2.0) * 100.0, player.y - planeDist * 100.0 }, 0xFFFF00 };
+
+        // go through each line on the map (this is where BSP would come in)
+        for (auto i : lines){
+            // the line to intersect; project the line so it's relative to our orientation
+            SMLine toIntersect = { project(i.pt1, angle, position), project(i.pt2, angle, position), i.color };
+            
+            // if there was an intersection
+            if (toIntersect.intersect(ray, intersect)){
+                SMVector vec = intersect;
+                // don't count intersections behind the player
+                if (vec.y < player.y - planeDist){
+
+                    // the line we actually intersected
+                    SMLine line = toIntersect;
+                    
+                    // grab the texture pointer of the intersected line
+                    line.texture = i.texture;
+
+                    // dist to intersection point (this doesn't suffer from the 'fisheye' effect because casting 
+                    // happens from the plane (planeDist) instead of from player, basically have a 2d frustum
+                    double dist = std::sqrt(std::pow((player.y - intersect.y), 2.0) + std::pow((player.x - intersect.x), 2.0));
+
+                    projectedLines.push_back(RaycastHit{ vec, line, ray, dist, static_cast<int>((a * castGap)) });
+                    std::push_heap(projectedLines.begin(), projectedLines.end());
+                }
+            }
+        }
+    }
+
+    return projectedLines;
+}
+
+inline SMVector SMRenderer::project(const SMVector& vecta, const double angle, const SMVector& position) {
+    // Do some fancy vector math
+   
+        SMVector result;
+
+        // offset position
+        double x = vecta.x - position.x;
+        double y = vecta.y - position.y;
+
+        // camera transform
+        result.x = x * sin(angle) - y * cos(angle);
+        result.y = x * cos(angle) + y * sin(angle);
+
+        result.x += player.x;
+        result.y += player.y;
+
+        return result;
+}
+
 // Draw 2D elements on top of rendered scene
 inline void SMRenderer::drawHud() {
     // Draw Minimap
@@ -379,67 +472,7 @@ inline void SMRenderer::drawMap() {
     */
 }
 
-// REFACTORTODO probably don't need these here
-/*
-// Vector intersection
-SMVector SMRenderer::intersection(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4) {
-    int x = crossProduct(x1, y1, x2, y2);
-    int y = crossProduct(x3, y3, x4, y4);
-    //int det = crossProduct(x1-x2, y1-y2, x3-x4, y3-y4);
-    x = crossProduct(x, x1-x2, y, x3-x4);
-    y = crossProduct(x, y1-y2, y, y3-y4);
-    
-    SMVector result;
-    result.x = x;
-    result.y = y;
-    result.z = 0;
-    return result;
-}
 
-// Some useless vector math functions
-inline double SMRenderer::dotProduct(const SMVector& vecta, const SMVector& vectb) {
-    double dot = vecta.x * vectb.x;
-    dot += vecta.y * vectb.y;
-    return dot;
-}
-
-// Black magic
-inline double SMRenderer::crossProduct(double x1, double y1, double x2, double y2) {
-    int result = x1*y2 - y1*x2;
-    return result;
-}
-
-// Convert to normal vector
-SMVector SMRenderer::normalize(const SMVector& vecta) {
-    double length = sqrt(vecta.x*vecta.x + vecta.y*vecta.y);
-    SMVector result;
-    result.x = vecta.x/length;
-    result.y = vecta.y/length;
-    result.z = 0;
-    return result;
-}
-
-// Do some fancy vector math
-SMVector SMRenderer::project(const SMVector& vect) {
-    SMVector result;
-	
-    // offset position
-	double x = vect.x - position.x ;
-	double y = vect.y - position.y ;
-	
-	// camera transform
-	result.x = x * sin(angle) - y * cos(angle);
-	result.y = x * cos(angle) + y * sin(angle);
-
-	result.x += player.x;
-	result.y += player.y;
-
-    result.x = result.x;
-    result.y = result.x / result.y + player.y;
-
-    return result;
-}
-*/
 
 inline double SMRenderer::smoothstep(double min, double max, double val){
     // get 0 < smoothed < 1

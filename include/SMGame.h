@@ -48,7 +48,6 @@ namespace smtech1{
 
             // for displaying things
             SMRenderer smRenderer;
-            Raycaster raycaster;
             
             // loading things
             AssetLoader assetLoader;
@@ -67,7 +66,6 @@ namespace smtech1{
         public:
             SMGame(uint32_t width, uint32_t height);
             ~SMGame();
-
             void run();
     };
 }

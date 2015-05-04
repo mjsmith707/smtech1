@@ -21,7 +21,7 @@ void AssetLoader::loadAssets(std::string mapFile, SpriteManager spriteManager, M
         
         input >> x1 >> y1 >> texture;
 
-        for (x1, y1; input; input >> x1 >> y1 >> texture){
+        for (; input; input >> x1 >> y1 >> texture){
             // create the texture if it's not in the map
             if (textureMap.find(std::string(texture)) == textureMap.end()){
                 Texture* textureObject = new Texture(std::string(texture));
@@ -47,7 +47,7 @@ void AssetLoader::loadAssets(std::string mapFile, SpriteManager spriteManager, M
 
         input >> x1 >> y1 >> x2 >> y2 >> texture;
         // parse our space-delimited input (no broken commas!)
-        for (x1, y1, x2, y2; input; input >> x1 >> y1 >> x2 >> y2 >> texture){
+        for (; input; input >> x1 >> y1 >> x2 >> y2 >> texture){
             SMLine newSeg = SMLine{ SMVector{ x1, y1, 0 }, SMVector{ x2, y2, 0 } };
 
             // create the texture if it's not in the map
