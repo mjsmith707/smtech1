@@ -12,7 +12,7 @@ using namespace smtech1;
 
 int main(int argc, char* argv[]) {
     // Spawn and start game
-    SMGame game(640, 480);
+    SMGame game(1024, 768);
     //SMGame game(1280, 1024);
     game.run();
 

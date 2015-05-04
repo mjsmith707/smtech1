@@ -71,7 +71,7 @@ void SMGame::threadinit() {
     // load all the assets based on the map's requirements
     // static function maybe?
     AssetLoader loader;
-    loader.loadAssets("sean.txt", spriteManager, map);
+    loader.loadAssets("e1l1.txt", spriteManager, map);
 
     // minimap init
     SMVector mapbl = { 10.0, 10.0, 0 };
